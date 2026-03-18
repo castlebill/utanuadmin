@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Utanu Farm — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#111410;--bg2:#181c15;--bg3:#1f241a;--bg4:#272d21;--border:#2e3428;--border2:#3a4132;--moss:#6b8f52;--fern:#8aad6a;--sage:#adc48a;--wheat:#d4b483;--sand:#c4956a;--clay:#8b5a2b;--cream:#e8dfc8;--muted:#6b7a5e;--text:#cdd5bb;--textdim:#7a8870;--red:#c0392b;--redbg:#2a1510;--amber:#c4862a;--amberbg:#251c0d;--greenbg:#0f1e0f;--r:8px;--sidebar:224px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
+.sidebar{width:var(--sidebar);flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50}
+.sidebar-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border)}
+.logo-mark{font-weight:600;font-size:1rem;color:var(--cream)}
+.logo-mark span{color:var(--fern)}
+.logo-sub{font-size:.68rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.sidebar-nav{flex:1;padding:14px 0;overflow-y:auto}
+.nav-group{margin-bottom:20px}
+.nav-group-label{padding:4px 20px 7px;font-size:.63rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 20px;cursor:pointer;font-size:.875rem;color:var(--textdim);transition:all .15s;border-left:2px solid transparent;user-select:none}
+.nav-item:hover{color:var(--text);background:var(--bg3)}
+.nav-item.active{color:var(--fern);background:rgba(107,143,82,.1);border-left-color:var(--fern)}
+.nav-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--moss);color:#fff;font-size:.63rem;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:10px;min-width:20px;text-align:center}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--border)}
+.admin-pill{display:flex;align-items:center;gap:10px}
+.admin-avatar{width:30px;height:30px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px}
+.admin-name{font-size:.8rem;color:var(--text);font-weight:500}
+.admin-role{font-size:.68rem;color:var(--muted)}
+.logout-btn{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px;border-radius:4px;transition:color .15s}
+.logout-btn:hover{color:var(--red)}
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:40}
+.page-title{font-size:1rem;font-weight:600;color:var(--cream)}
+.page-sub{font-size:.78rem;color:var(--muted);margin-left:4px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.topbar-btn{background:var(--bg3);border:1px solid var(--border);color:var(--textdim);padding:7px 13px;border-radius:var(--r);font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;display:flex;align-items:center;gap:6px}
+.topbar-btn:hover{color:var(--text);border-color:var(--border2)}
+.topbar-btn.primary{background:var(--moss);border-color:var(--moss);color:#fff}
+.topbar-btn.primary:hover{background:var(--fern);border-color:var(--fern)}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.status-dot.online{background:var(--fern);box-shadow:0 0 6px rgba(138,173,106,.5)}
+.content{padding:24px;flex:1}
+.view{display:none}
+.view.active{display:block}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.bookings::before{background:var(--moss)}.stat-card.revenue::before{background:var(--wheat)}.stat-card.people::before{background:var(--sage)}.stat-card.pending::before{background:var(--amber)}
+.stat-label{font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px}
+.stat-value{font-size:1.7rem;font-weight:600;color:var(--cream);font-family:'JetBrains Mono',monospace;line-height:1}
+.stat-change{font-size:.73rem;margin-top:7px}
+.stat-change.up{color:var(--fern)}.stat-change.warn{color:var(--amber)}
+.stat-icon{position:absolute;top:16px;right:16px;font-size:20px;opacity:.22}
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.table-title{font-size:.875rem;font-weight:600;color:var(--cream)}
+.table-count{font-size:.7rem;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:'JetBrains Mono',monospace}
+.table-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.search-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:var(--r);font-size:.82rem;font-family:'DM Sans',sans-serif;outline:none;width:200px;transition:border-color .15s}
+.search-input:focus{border-color:var(--border2)}
+.search-input::placeholder{color:var(--muted)}
+.filter-select{background:var(--bg3);border:1px solid var(--border);color:var(--textdim);padding:7px 10px;border-radius:var(--r);font-size:.82rem;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border)}
+thead th{text-align:left;padding:9px 14px;font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:500;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg3)}
+tbody td{padding:12px 14px;font-size:.84rem;color:var(--text);vertical-align:middle}
+.td-mono{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--textdim)}
+.td-name{font-weight:500;color:var(--cream)}
+.td-phone{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--sage)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:500;white-space:nowrap}
+.badge-pending{background:var(--amberbg);color:var(--amber);border:1px solid rgba(196,134,42,.3)}
+.badge-confirmed{background:var(--greenbg);color:var(--fern);border:1px solid rgba(61,122,58,.3)}
+.badge-cancelled{background:var(--redbg);color:var(--red);border:1px solid rgba(192,57,43,.3)}
+.badge-completed{background:var(--bg3);color:var(--muted);border:1px solid var(--border)}
+.badge-family{background:rgba(139,90,43,.15);color:var(--sand);border:1px solid rgba(139,90,43,.25)}
+.badge-school{background:rgba(107,143,82,.12);color:var(--sage);border:1px solid rgba(107,143,82,.25)}
+.badge-corporate{background:rgba(122,159,181,.1);color:#7ab0c8;border:1px solid rgba(122,159,181,.2)}
+.badge-birthday{background:rgba(212,180,131,.1);color:var(--wheat);border:1px solid rgba(212,180,131,.2)}
+.badge-general{background:rgba(173,196,138,.1);color:var(--sage);border:1px solid rgba(173,196,138,.2)}
+.badge-bootcamp{background:rgba(192,57,43,.1);color:#e07060;border:1px solid rgba(192,57,43,.2)}
+.badge-event{background:rgba(122,90,181,.12);color:#a090d8;border:1px solid rgba(122,90,181,.2)}
+.badge-catering{background:rgba(196,149,106,.12);color:var(--sand);border:1px solid rgba(196,149,106,.25)}
+.row-action{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:4px;font-size:.78rem;transition:all .15s;font-family:'DM Sans',sans-serif}
+.row-action:hover{color:var(--fern);background:rgba(107,143,82,.1)}
+.row-action.danger:hover{color:var(--red);background:rgba(192,57,43,.1)}
+.detail-overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.65)}
+.detail-overlay.open{display:block}
+.detail-panel{position:fixed;top:0;right:0;bottom:0;width:420px;background:var(--bg2);border-left:1px solid var(--border);z-index:101;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
+.detail-panel.open{transform:translateX(0)}
+.panel-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:.95rem;font-weight:600;color:var(--cream)}
+.panel-close{background:var(--bg3);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:var(--r);cursor:pointer;font-size:1rem;transition:all .15s}
+.panel-close:hover{color:var(--text);border-color:var(--border2)}
+.panel-body{flex:1;overflow-y:auto;padding:22px}
+.panel-section{margin-bottom:22px}
+.panel-section-title{font-size:.66rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.detail-row{display:flex;gap:12px;margin-bottom:9px;align-items:baseline}
+.detail-key{font-size:.77rem;color:var(--muted);min-width:110px;flex-shrink:0}
+.detail-val{font-size:.87rem;color:var(--text)}
+.detail-val.mono{font-family:'JetBrains Mono',monospace;font-size:.78rem}
+.detail-val.highlight{color:var(--cream);font-weight:500}
+.panel-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:9px}
+.status-change-group{display:flex;gap:8px;flex-wrap:wrap}
+.status-btn{flex:1;padding:8px 10px;border-radius:var(--r);border:1px solid;font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer;transition:all .2s;font-weight:500}
+.status-btn.confirm{border-color:var(--moss);color:var(--fern);background:rgba(107,143,82,.1)}
+.status-btn.confirm:hover{background:rgba(107,143,82,.2)}
+.status-btn.cancel{border-color:rgba(192,57,43,.4);color:var(--red);background:var(--redbg)}
+.status-btn.cancel:hover{background:rgba(192,57,43,.15)}
+.status-btn.complete{border-color:var(--border);color:var(--muted);background:var(--bg3)}
+.status-btn.complete:hover{color:var(--text);border-color:var(--border2)}
+.call-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg3);color:var(--textdim);font-family:'DM Sans',sans-serif;font-size:.83rem;cursor:pointer;transition:all .15s;text-decoration:none}
+.call-btn:hover{color:var(--sage);border-color:var(--border2)}
+.dash-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:20px}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px}
+.chart-title{font-size:.8rem;font-weight:600;color:var(--cream);margin-bottom:3px}
+.chart-sub{font-size:.72rem;color:var(--muted);margin-bottom:14px}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:90px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;border-radius:4px 4px 0 0;background:var(--moss);opacity:.6;min-height:4px}
+.bar.this{opacity:1;background:var(--fern)}
+.bar-label{font-size:.63rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.donut-wrap{position:relative;width:96px;height:96px;margin:0 auto}
+.donut-wrap svg{width:96px;height:96px;transform:rotate(-90deg)}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.donut-val{font-size:1.15rem;font-weight:600;color:var(--cream);font-family:'JetBrains Mono',monospace}
+.donut-sub{font-size:.63rem;color:var(--muted)}
+.legend{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:.76rem;color:var(--textdim)}
+.legend-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.settings-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:0}
+.settings-card.full{grid-column:1/-1}
+.settings-card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.settings-card-title{font-size:.85rem;font-weight:600;color:var(--cream)}
+.settings-card-sub{font-size:.73rem;color:var(--muted);margin-top:1px}
+.settings-body{padding:18px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.field-row.single{grid-template-columns:1fr}
+.field-group{display:flex;flex-direction:column;gap:5px}
+.field-label{font-size:.72rem;color:var(--muted);letter-spacing:.4px;font-weight:500}
+.field-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:.87rem;outline:none;transition:border-color .15s;width:100%}
+.field-input:focus{border-color:var(--moss)}
+.field-input::placeholder{color:var(--muted)}
+textarea.field-input{resize:vertical;min-height:70px;line-height:1.5}
+.save-btn{background:var(--moss);border:none;color:#fff;padding:9px 20px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:background .2s}
+.save-btn:hover{background:var(--fern)}
+.field-toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.field-toggle:last-child{border-bottom:none}
+.toggle-info{flex:1}
+.toggle-label{font-size:.85rem;color:var(--cream);font-weight:500}
+.toggle-desc{font-size:.75rem;color:var(--muted);margin-top:2px}
+.toggle-switch{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:10px;cursor:pointer;transition:background .2s}
+.toggle-switch input:checked+.toggle-track{background:var(--moss)}
+.toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
+.toggle-switch input:checked~.toggle-knob{transform:translateX(16px)}
+.menu-item-row{display:grid;grid-template-columns:140px 1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.menu-item-row:last-of-type{border-bottom:none}
+.menu-section-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 6px;border-radius:4px;font-size:.85rem;transition:color .15s}
+.del-btn:hover{color:var(--red)}
+.add-row-btn{background:var(--bg3);border:1px dashed var(--border2);color:var(--textdim);padding:8px;width:100%;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:.8rem;cursor:pointer;transition:all .15s;margin-top:10px;text-align:center}
+.add-row-btn:hover{color:var(--text);border-color:var(--fern)}
+.kids-tabs{display:flex;gap:0;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;width:fit-content}
+.kids-tab{padding:8px 18px;font-size:.82rem;cursor:pointer;color:var(--textdim);background:var(--bg3);border:none;font-family:'DM Sans',sans-serif;transition:all .15s;border-right:1px solid var(--border)}
+.kids-tab:last-child{border-right:none}
+.kids-tab.active{background:var(--moss);color:#fff}
+.empty-state{padding:50px;text-align:center;color:var(--muted)}
+.empty-icon{font-size:2.2rem;margin-bottom:10px;opacity:.4}
+.empty-text{font-size:.87rem}
+.toast{position:fixed;bottom:22px;right:22px;z-index:999;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:.855rem;color:var(--text);transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;max-width:300px}
+.toast.show{transform:translateY(0);opacity:1;pointer-events:auto}
+.toast.success{border-left:3px solid var(--fern)}.toast.error{border-left:3px solid var(--red)}.toast.info{border-left:3px solid var(--wheat)}
+.login-screen{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);align-items:center;justify-content:center}
+.login-screen.active{display:flex}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:38px;width:360px}
+.login-logo{font-size:1.1rem;font-weight:600;color:var(--cream);margin-bottom:3px}
+.login-logo span{color:var(--fern)}
+.login-sub{font-size:.78rem;color:var(--muted);margin-bottom:26px}
+.login-group{margin-bottom:14px}
+.login-group label{display:block;font-size:.73rem;color:var(--muted);margin-bottom:5px;letter-spacing:.4px}
+.login-group input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 13px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;transition:border-color .15s}
+.login-group input:focus{border-color:var(--moss)}
+.login-btn{width:100%;background:var(--moss);border:none;color:#fff;padding:11px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:.93rem;font-weight:500;cursor:pointer;margin-top:6px;transition:background .2s}
+.login-btn:hover{background:var(--fern)}
+.login-note{text-align:center;font-size:.73rem;color:var(--muted);margin-top:12px}
+.spin{display:inline-block;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:900px){:root{--sidebar:58px}.nav-item span,.nav-group-label,.admin-name,.admin-role,.logo-sub{display:none}.nav-badge{display:none}.stats-row{grid-template-columns:1fr 1fr}.dash-grid{grid-template-columns:1fr}.detail-panel{width:100%}.settings-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.stats-row{grid-template-columns:1fr}.content{padding:14px}}
+</style>
+</head>
+<body>
+
+<div class="login-screen active" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Utanu<span>Farm</span></div>
+    <div class="login-sub">Admin Dashboard</div>
+    <div class="login-group"><label>Email</label><input type="email" id="login-email" value="admin@utanu.farm"></div>
+    <div class="login-group"><label>Password</label><input type="password" id="login-password" value="password123" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <p class="login-note">Demo mode — any credentials work.</p>
+  </div>
+</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-mark">Utanu<span>Farm</span></div><div class="logo-sub">Admin Panel</div></div>
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">Overview</div>
+      <div class="nav-item active" onclick="showView('dashboard')"><span class="nav-icon">&#9711;</span><span>Dashboard</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Operations</div>
+      <div class="nav-item" onclick="showView('bookings')"><span class="nav-icon">&#128197;</span><span>Bookings</span><span class="nav-badge" id="pending-badge">0</span></div>
+      <div class="nav-item" onclick="showView('payments')"><span class="nav-icon">&#128179;</span><span>Payments</span></div>
+      <div class="nav-item" onclick="showView('messages')"><span class="nav-icon">&#9993;</span><span>Messages</span><span class="nav-badge" id="msg-badge">0</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Programs</div>
+      <div class="nav-item" onclick="showView('kids')"><span class="nav-icon">&#129306;</span><span>Kids Program</span></div>
+      <div class="nav-item" onclick="showView('blog')"><span class="nav-icon">&#128221;</span><span>Blog Posts</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Config</div>
+      <div class="nav-item" onclick="showView('services')"><span class="nav-icon">&#127807;</span><span>Services</span></div>
+      <div class="nav-item" onclick="showView('karani')"><span class="nav-icon">&#127950;</span><span>Karani Cars</span></div>
+      <div class="nav-item" onclick="showView('menu')"><span class="nav-icon">&#127869;</span><span>Menu</span></div>
+      <div class="nav-item" onclick="showView('settings')"><span class="nav-icon">&#9881;</span><span>Settings</span></div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-pill">
+      <div class="admin-avatar">&#127807;</div>
+      <div><div class="admin-name" id="admin-name-display">Admin</div><div class="admin-role">Farm Manager</div></div>
+      <button class="logout-btn" onclick="doLogout()">&#9211;</button>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <span class="page-title" id="page-title">Dashboard</span>
+    <span class="page-sub" id="page-sub">&#8212; Overview</span>
+    <div class="topbar-right">
+      <div style="display:flex;align-items:center;gap:6px;font-size:.73rem;color:var(--muted)"><span class="status-dot online"></span><span id="conn-status">Demo mode</span></div>
+      <button class="topbar-btn" onclick="refreshAll()"><span id="refresh-icon">&#8635;</span> Refresh</button>
+      <button class="topbar-btn primary" onclick="showView('bookings')">+ New Booking</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="stats-row">
+        <div class="stat-card bookings"><div class="stat-label">Total Bookings</div><div class="stat-value" id="stat-total">&#8212;</div><div class="stat-change up" id="stat-total-sub">Loading...</div><div class="stat-icon">&#128197;</div></div>
+        <div class="stat-card pending"><div class="stat-label">Pending Approval</div><div class="stat-value" id="stat-pending">&#8212;</div><div class="stat-change warn" id="stat-pending-sub">Awaiting</div><div class="stat-icon">&#9203;</div></div>
+        <div class="stat-card people"><div class="stat-label">Visitors This Month</div><div class="stat-value" id="stat-visitors">&#8212;</div><div class="stat-change up" id="stat-vis-sub">People booked</div><div class="stat-icon">&#128101;</div></div>
+        <div class="stat-card revenue"><div class="stat-label">Est. Revenue (KES)</div><div class="stat-value" id="stat-revenue">&#8212;</div><div class="stat-change up" id="stat-rev-sub">Confirmed</div><div class="stat-icon">&#128176;</div></div>
+      </div>
+      <div class="dash-grid">
+        <div class="chart-card"><div class="chart-title">Bookings by Month</div><div class="chart-sub">Last 7 months</div><div class="bar-chart" id="bar-chart"></div></div>
+        <div class="chart-card"><div class="chart-title">Service Mix</div><div class="chart-sub">By booking type</div>
+          <div class="donut-wrap"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bg3)" stroke-width="14"/><circle id="d1" cx="50" cy="50" r="38" fill="none" stroke="#6b8f52" stroke-width="14" stroke-dasharray="0 240" stroke-linecap="round"/><circle id="d2" cx="50" cy="50" r="38" fill="none" stroke="#d4b483" stroke-width="14" stroke-dasharray="0 240" stroke-linecap="round"/><circle id="d3" cx="50" cy="50" r="38" fill="none" stroke="#7ab0c8" stroke-width="14" stroke-dasharray="0 240" stroke-linecap="round"/><circle id="d4" cx="50" cy="50" r="38" fill="none" stroke="#c4862a" stroke-width="14" stroke-dasharray="0 240" stroke-linecap="round"/><circle id="d5" cx="50" cy="50" r="38" fill="none" stroke="#adc48a" stroke-width="14" stroke-dasharray="0 240" stroke-linecap="round"/><circle id="d6" cx="50" cy="50" r="38" fill="none" stroke="#e07060" stroke-width="14" stroke-dasharray="0 240" stroke-linecap="round"/><circle id="d7" cx="50" cy="50" r="38" fill="none" stroke="#a090d8" stroke-width="14" stroke-dasharray="0 240" stroke-linecap="round"/><circle id="d8" cx="50" cy="50" r="38" fill="none" stroke="#c4956a" stroke-width="14" stroke-dasharray="0 240" stroke-linecap="round"/></svg>
+          <div class="donut-center"><div class="donut-val" id="donut-val">&#8212;</div><div class="donut-sub">bookings</div></div></div>
+          <div class="legend" id="donut-legend"></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Recent Bookings</span><button class="topbar-btn" style="margin-left:auto" onclick="showView('bookings')">View All &#8594;</button></div>
+        <table><thead><tr><th>Name</th><th>Type</th><th>Date</th><th>People</th><th>Status</th></tr></thead>
+        <tbody id="recent-tbody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Loading...</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div class="view" id="view-bookings">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">All Bookings</span><span class="table-count" id="bookings-count">0</span>
+          <div class="table-actions">
+            <input class="search-input" placeholder="Search name or phone..." id="search-bookings" oninput="filterBookings()">
+            <select class="filter-select" id="filter-status" onchange="filterBookings()"><option value="">All Status</option><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option><option value="completed">Completed</option></select>
+            <select class="filter-select" id="filter-type" onchange="filterBookings()"><option value="">All Types</option><option value="family">Family</option><option value="school">School</option><option value="corporate">Corporate</option><option value="birthday">Birthday</option><option value="general">Walk</option><option value="bootcamp">Bootcamp</option><option value="event">Event</option><option value="catering">Catering</option></select>
+            <button class="topbar-btn" onclick="exportCSV()">&#8595; Export</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Type</th><th>Date</th><th>Pax</th><th>Meal</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="bookings-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="view" id="view-payments">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Payment Records</span><span class="table-count" id="payments-count">0</span></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Booking</th><th>Phone</th><th>Amount (KES)</th><th>M-Pesa Receipt</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="payments-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="view" id="view-messages">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Contact Messages</span><span class="table-count" id="messages-count">0</span></div>
+        <table><thead><tr><th>Name</th><th>Phone / Email</th><th>Subject</th><th>Message</th><th>Date</th><th>Read</th></tr></thead>
+        <tbody id="messages-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- KIDS PROGRAM -->
+    <div class="view" id="view-kids">
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card bookings"><div class="stat-label">Enrolled Children</div><div class="stat-value" id="kids-count">&#8212;</div><div class="stat-icon">&#129306;</div></div>
+        <div class="stat-card people"><div class="stat-label">Sessions Run</div><div class="stat-value" id="sessions-count">&#8212;</div><div class="stat-icon">&#127919;</div></div>
+        <div class="stat-card revenue"><div class="stat-label">Total Points Awarded</div><div class="stat-value" id="points-total">&#8212;</div><div class="stat-icon">&#11088;</div></div>
+      </div>
+      <div class="kids-tabs">
+        <button class="kids-tab active" onclick="showKidsTab('leaderboard',this)">&#127942; Leaderboard</button>
+        <button class="kids-tab" onclick="showKidsTab('children',this)">&#129306; Children</button>
+        <button class="kids-tab" onclick="showKidsTab('sessions',this)">&#128198; Sessions</button>
+      </div>
+      <div id="kids-tab-leaderboard" class="table-card">
+        <div class="table-header"><span class="table-title">Points Leaderboard</span><button class="topbar-btn primary" style="margin-left:auto" onclick="showToast('info','Connect Supabase to award live points')">+ Award Points</button></div>
+        <table><thead><tr><th>#</th><th>Child</th><th>Age Group</th><th>Sessions</th><th>Points</th><th>Badge</th></tr></thead>
+        <tbody id="leaderboard-tbody"></tbody></table>
+      </div>
+      <div id="kids-tab-children" class="table-card" style="display:none">
+        <div class="table-header"><span class="table-title">Enrolled Children</span><span class="table-count" id="children-count">0</span></div>
+        <table><thead><tr><th>Name</th><th>Age</th><th>Group</th><th>Parent</th><th>Phone</th><th>Enrolled</th></tr></thead>
+        <tbody id="children-tbody"></tbody></table>
+      </div>
+      <div id="kids-tab-sessions" class="table-card" style="display:none">
+        <div class="table-header"><span class="table-title">Sessions</span><button class="topbar-btn primary" style="margin-left:auto" onclick="showToast('info','Session editor coming soon')">+ New Session</button></div>
+        <table><thead><tr><th>Title</th><th>Date</th><th>Age Group</th><th>Activities</th><th>Max</th></tr></thead>
+        <tbody id="sessions-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- BLOG -->
+    <div class="view" id="view-blog">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Blog Posts</span><span class="table-count" id="blog-count">0</span><button class="topbar-btn primary" style="margin-left:auto" onclick="showToast('info','Post editor — connect your CMS')">+ New Post</button></div>
+        <table><thead><tr><th>Title</th><th>Author</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody id="blog-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- SERVICES -->
+    <div class="view" id="view-services">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">All Services</span><span class="table-count" id="services-count">0</span><button class="topbar-btn primary" style="margin-left:auto" onclick="openServiceEditor()">+ Add Service</button></div>
+        <table><thead><tr><th>Title</th><th>Category</th><th>Price / Person</th><th>Capacity</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="services-tbody"></tbody></table>
+      </div>
+      <div id="service-editor" style="display:none;margin-top:16px" class="settings-card full">
+        <div class="settings-card-header"><div><div class="settings-card-title" id="svc-editor-title">New Service</div></div><button class="topbar-btn" onclick="closeServiceEditor()">&#10005; Cancel</button></div>
+        <div class="settings-body">
+          <div class="field-row"><div class="field-group"><label class="field-label">Service Title</label><input class="field-input" id="svc-title" placeholder="e.g. Weekend Bootcamp"></div><div class="field-group"><label class="field-label">Category</label><select class="field-input" id="svc-category"><option value="family">Family</option><option value="school">School</option><option value="corporate">Corporate</option><option value="birthday">Birthday</option><option value="general">Nature Walk</option><option value="bootcamp">Bootcamp</option><option value="event">Event Hosting</option><option value="catering">Outside Catering</option></select></div></div>
+          <div class="field-row"><div class="field-group"><label class="field-label">Price per Person (KES)</label><input class="field-input" id="svc-price" type="number" placeholder="1500"></div><div class="field-group"><label class="field-label">Max Capacity</label><input class="field-input" id="svc-capacity" type="number" placeholder="40"></div></div>
+          <div class="field-row"><div class="field-group"><label class="field-label">Duration (hours)</label><input class="field-input" id="svc-duration" type="number" step="0.5" placeholder="6"></div><div class="field-group" style="justify-content:flex-end;padding-top:18px"><button class="save-btn" onclick="saveService()">Save Service</button></div></div>
+          <div class="field-row single"><div class="field-group"><label class="field-label">Description</label><textarea class="field-input" id="svc-desc" placeholder="What guests experience..."></textarea></div></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- KARANI CARS -->
+    <div class="view" id="view-karani">
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card bookings"><div class="stat-label">Cars in Fleet</div><div class="stat-value" id="karani-fleet-count">8</div><div class="stat-icon">&#127950;</div></div>
+        <div class="stat-card revenue"><div class="stat-label">Car Bookings</div><div class="stat-value" id="karani-bookings-count">0</div><div class="stat-icon">&#128197;</div></div>
+        <div class="stat-card people"><div class="stat-label">Hours Booked</div><div class="stat-value" id="karani-hours">0</div><div class="stat-icon">&#9200;</div></div>
+        <div class="stat-card pending"><div class="stat-label">Karani Payout (KES)</div><div class="stat-value" id="karani-payout">0</div><div class="stat-change warn">Due to Mr. Karani</div><div class="stat-icon">&#128176;</div></div>
+      </div>
+
+      <!-- Fleet cards -->
+      <div class="table-card" style="margin-bottom:20px">
+        <div class="table-header">
+          <span class="table-title">Karani's Classic Car Fleet</span>
+          <span class="table-count">8 cars</span>
+          <button class="topbar-btn primary" style="margin-left:auto" onclick="showToast('info','Add new car — connect Supabase to persist')">+ Add Car</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:16px" id="karani-fleet-grid"></div>
+      </div>
+
+      <!-- Bookings with cars -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">Bookings with Classic Cars</span>
+          <span class="table-count" id="karani-car-bookings-count">0</span>
+          <button class="topbar-btn" style="margin-left:auto" onclick="exportKaraniCSV()">&#8595; Export Payout</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table><thead><tr>
+            <th>Guest</th><th>Date</th><th>Type</th><th>Cars Selected</th><th>Hours</th><th>Pickup</th><th>Car Cost (KES)</th><th>Status</th>
+          </tr></thead>
+          <tbody id="karani-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENU -->
+    <div class="view" id="view-menu">
+      <div class="settings-grid">
+        <div class="settings-card">
+          <div class="settings-card-header"><div><div class="settings-card-title">Meal Pricing</div><div class="settings-card-sub">Shown live on booking form</div></div></div>
+          <div class="settings-body">
+            <div class="field-group" style="margin-bottom:12px"><label class="field-label">Price per Person (KES)</label><input class="field-input" id="menu-price" type="number" value="800"></div>
+            <div class="field-group" style="margin-bottom:12px"><label class="field-label">Meal Label</label><input class="field-input" id="menu-label" value="Farm-to-table meal"></div>
+            <div class="field-group" style="margin-bottom:12px"><label class="field-label">Dietary note</label><textarea class="field-input" id="menu-note" rows="2">Vegetarian options available. Add dietary needs in special requests.</textarea></div>
+            <button class="save-btn" onclick="saveMenuSettings()">Save Pricing</button>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="settings-card-header"><div><div class="settings-card-title">Courses</div><div class="settings-card-sub">Menu sections</div></div><button class="topbar-btn primary" onclick="addCourse()">+ Course</button></div>
+          <div class="settings-body" id="courses-list"></div>
+        </div>
+        <div class="settings-card full">
+          <div class="settings-card-header"><div><div class="settings-card-title">Dishes</div><div class="settings-card-sub">Changes appear live on booking form</div></div><button class="topbar-btn primary" onclick="addDish()">+ Add Dish</button></div>
+          <div class="settings-body" id="dishes-list"></div>
+          <div style="padding:0 18px 18px"><button class="save-btn" onclick="saveMenu()">Save Menu</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="view-settings">
+      <div class="settings-grid">
+        <div class="settings-card">
+          <div class="settings-card-header"><div><div class="settings-card-title">Farm Information</div><div class="settings-card-sub">Displayed on website</div></div></div>
+          <div class="settings-body">
+            <div class="field-row single"><div class="field-group"><label class="field-label">Farm Name</label><input class="field-input" id="cfg-name" value="Utanu Farm"></div></div>
+            <div class="field-row single"><div class="field-group"><label class="field-label">Tagline</label><input class="field-input" id="cfg-tagline" value="Where the city finds its breath"></div></div>
+            <div class="field-row single"><div class="field-group"><label class="field-label">Location</label><input class="field-input" id="cfg-location" value="Kiambu County, Kenya"></div></div>
+            <div class="field-row"><div class="field-group"><label class="field-label">Phone</label><input class="field-input" id="cfg-phone" value="0700 000 000"></div><div class="field-group"><label class="field-label">Email</label><input class="field-input" id="cfg-email" value="hello@utanu.farm"></div></div>
+            <div class="field-row"><div class="field-group"><label class="field-label">Opens</label><input class="field-input" id="cfg-open" value="7:00 AM"></div><div class="field-group"><label class="field-label">Closes</label><input class="field-input" id="cfg-close" value="6:00 PM"></div></div>
+            <button class="save-btn" onclick="saveCfg('farm')">Save</button>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="settings-card-header"><div><div class="settings-card-title">M-Pesa / Payments</div><div class="settings-card-sub">Safaricom Daraja credentials</div></div></div>
+          <div class="settings-body">
+            <div class="field-row single"><div class="field-group"><label class="field-label">Business Shortcode</label><input class="field-input" id="cfg-shortcode" placeholder="174379"></div></div>
+            <div class="field-row single"><div class="field-group"><label class="field-label">Consumer Key</label><input class="field-input" id="cfg-consumer-key" placeholder="From Safaricom Dev Portal" type="password"></div></div>
+            <div class="field-row single"><div class="field-group"><label class="field-label">Consumer Secret</label><input class="field-input" id="cfg-consumer-secret" placeholder="Secret" type="password"></div></div>
+            <div class="field-row single"><div class="field-group"><label class="field-label">Passkey</label><input class="field-input" id="cfg-passkey" placeholder="Lipa na M-Pesa passkey" type="password"></div></div>
+            <div class="field-row single"><div class="field-group"><label class="field-label">Callback URL</label><input class="field-input" id="cfg-callback" placeholder="https://project.supabase.co/functions/v1/mpesa-callback"></div></div>
+            <button class="save-btn" onclick="saveCfg('mpesa')">Save Credentials</button>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="settings-card-header"><div><div class="settings-card-title">Booking Rules</div><div class="settings-card-sub">Capacity and restrictions</div></div></div>
+          <div class="settings-body">
+            <div class="field-row"><div class="field-group"><label class="field-label">Min notice (days)</label><input class="field-input" id="cfg-notice" type="number" value="1"></div><div class="field-group"><label class="field-label">Max advance (days)</label><input class="field-input" id="cfg-advance" type="number" value="180"></div></div>
+            <div class="field-row"><div class="field-group"><label class="field-label">Min group size</label><input class="field-input" id="cfg-mingroup" type="number" value="1"></div><div class="field-group"><label class="field-label">Max group size</label><input class="field-input" id="cfg-maxgroup" type="number" value="100"></div></div>
+            <div style="padding:4px 0 12px">
+              <div class="field-toggle"><div class="toggle-info"><div class="toggle-label">Require deposit on booking</div><div class="toggle-desc">Trigger M-Pesa STK push on submit</div></div><label class="toggle-switch"><input type="checkbox" id="cfg-deposit"><span class="toggle-track"></span><span class="toggle-knob"></span></label></div>
+              <div class="field-toggle"><div class="toggle-info"><div class="toggle-label">Allow same-day bookings</div><div class="toggle-desc">Guests can book for today</div></div><label class="toggle-switch"><input type="checkbox" id="cfg-sameday" checked><span class="toggle-track"></span><span class="toggle-knob"></span></label></div>
+              <div class="field-toggle"><div class="toggle-info"><div class="toggle-label">Auto-confirm bookings</div><div class="toggle-desc">Skip pending status</div></div><label class="toggle-switch"><input type="checkbox" id="cfg-autoconfirm"><span class="toggle-track"></span><span class="toggle-knob"></span></label></div>
+            </div>
+            <button class="save-btn" onclick="saveCfg('booking')">Save Rules</button>
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="settings-card-header"><div><div class="settings-card-title">Notifications</div><div class="settings-card-sub">Admin alerts</div></div></div>
+          <div class="settings-body">
+            <div style="padding:4px 0 12px">
+              <div class="field-toggle"><div class="toggle-info"><div class="toggle-label">New booking alert</div><div class="toggle-desc">WhatsApp on every new booking</div></div><label class="toggle-switch"><input type="checkbox" id="cfg-n1" checked><span class="toggle-track"></span><span class="toggle-knob"></span></label></div>
+              <div class="field-toggle"><div class="toggle-info"><div class="toggle-label">Payment received</div><div class="toggle-desc">Alert when M-Pesa confirms</div></div><label class="toggle-switch"><input type="checkbox" id="cfg-n2" checked><span class="toggle-track"></span><span class="toggle-knob"></span></label></div>
+              <div class="field-toggle"><div class="toggle-info"><div class="toggle-label">Cancellation alert</div><div class="toggle-desc">Alert when booking cancelled</div></div><label class="toggle-switch"><input type="checkbox" id="cfg-n3"><span class="toggle-track"></span><span class="toggle-knob"></span></label></div>
+              <div class="field-toggle"><div class="toggle-info"><div class="toggle-label">Daily summary at 6pm</div><div class="toggle-desc">End-of-day digest</div></div><label class="toggle-switch"><input type="checkbox" id="cfg-n4"><span class="toggle-track"></span><span class="toggle-knob"></span></label></div>
+            </div>
+            <div class="field-row single" style="margin-top:4px"><div class="field-group"><label class="field-label">Admin WhatsApp Number</label><input class="field-input" id="cfg-wa" placeholder="0712345678"></div></div>
+            <div style="margin-top:10px"><button class="save-btn" onclick="saveCfg('notifications')">Save</button></div>
+          </div>
+        </div>
+        <div class="settings-card full">
+          <div class="settings-card-header"><div><div class="settings-card-title">Supabase Connection</div><div class="settings-card-sub">Connect live database</div></div><span id="sb-status-badge" class="badge badge-pending">Demo mode</span></div>
+          <div class="settings-body">
+            <div class="field-row"><div class="field-group"><label class="field-label">Project URL</label><input class="field-input" id="cfg-sb-url" placeholder="https://xyzxyz.supabase.co"></div><div class="field-group"><label class="field-label">Anon Key</label><input class="field-input" id="cfg-sb-key" placeholder="eyJhbGc..." type="password"></div></div>
+            <div style="display:flex;gap:10px;margin-top:4px"><button class="save-btn" onclick="testSupabase()">Test Connection</button><button class="save-btn" onclick="applySupabase()" style="background:var(--clay)">Apply &amp; Reload</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="detail-overlay" id="detail-overlay" onclick="closePanel()"></div>
+<div class="detail-panel" id="detail-panel">
+  <div class="panel-header"><span class="panel-title" id="panel-title">Booking Details</span><button class="panel-close" onclick="closePanel()">&#215;</button></div>
+  <div class="panel-body" id="panel-body"></div>
+  <div class="panel-footer" id="panel-footer"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+let SUPABASE_URL=localStorage.getItem('sb_url')||'https://owfrejfletnzwvcjzwme.supabase.co';
+let SUPABASE_ANON_KEY=localStorage.getItem('sb_key')||'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93ZnJlamZsZXRuend2Y2p6d21lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3OTk1MjEsImV4cCI6MjA4OTM3NTUyMX0.2m_EOJzFBla0f8Bxj2_sGp5yvMUwEeWN3JyRAKdW2_0';
+const isDemo=()=>SUPABASE_URL==='YOUR_SUPABASE_URL';
+let sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+const DEMO_BOOKINGS=[
+  {id:'bk-001',name:'Wanjiku Kamau',phone:'0712345678',email:'wanjiku@gmail.com',type:'family',booking_date:'2026-03-22',time_slot:'9:00 AM',people:6,food_included:true,special_requests:'Wheelchair access needed',status:'pending',total_amount:10800,created_at:'2026-03-17T08:30:00Z'},
+  {id:'bk-002',name:'Mwangi Secondary School',phone:'0722234567',email:'principal@mwangi.ac.ke',type:'school',booking_date:'2026-03-25',time_slot:'9:00 AM',people:45,food_included:false,special_requests:'Groups of 10',status:'confirmed',total_amount:36000,created_at:'2026-03-16T14:20:00Z'},
+  {id:'bk-003',name:'Safaricom PLC',phone:'0733345678',email:'hr@safaricom.co.ke',type:'corporate',booking_date:'2026-04-04',time_slot:'11:00 AM',people:28,food_included:true,special_requests:'8 vegetarian',status:'confirmed',total_amount:120400,created_at:'2026-03-15T10:00:00Z'},
+  {id:'bk-004',name:'Achieng Omondi',phone:'0744456789',email:null,type:'birthday',booking_date:'2026-03-29',time_slot:'2:00 PM',people:15,food_included:true,special_requests:'Birthday cake for 7-year-old',cars_requested:true,cars_selected:['Volkswagen Beetle'],cars_hours:2,cars_pickup:'Karen, Nairobi',status:'pending',total_amount:42000,created_at:'2026-03-17T16:45:00Z'},
+  {id:'bk-005',name:'James Muturi',phone:'0755567890',email:'james.m@gmail.com',type:'general',booking_date:'2026-03-21',time_slot:'7:00 AM',people:2,food_included:false,special_requests:null,status:'completed',total_amount:1000,created_at:'2026-03-10T09:15:00Z'},
+  {id:'bk-006',name:'Fatuma Hassan',phone:'0766678901',email:'fatuma@gmail.com',type:'family',booking_date:'2026-03-28',time_slot:'9:00 AM',people:4,food_included:true,special_requests:null,status:'cancelled',total_amount:9200,created_at:'2026-03-12T11:30:00Z'},
+  {id:'bk-007',name:'Eastlands Primary',phone:'0777789012',email:'info@eastlands.ac.ke',type:'school',booking_date:'2026-04-08',time_slot:'9:00 AM',people:60,food_included:false,special_requests:'Bus at 8:45',status:'pending',total_amount:48000,created_at:'2026-03-18T07:00:00Z'},
+  {id:'bk-008',name:'FitLife Kenya',phone:'0788901234',email:'info@fitlife.co.ke',type:'bootcamp',booking_date:'2026-04-12',time_slot:'7:00 AM',people:30,food_included:true,special_requests:'High-protein meal options',status:'confirmed',total_amount:97000,created_at:'2026-03-17T09:00:00Z'},
+  {id:'bk-009',name:'Njeri & Kevin Wedding',phone:'0799012345',email:'njeri.k@gmail.com',type:'event',booking_date:'2026-05-10',time_slot:'2:00 PM',people:150,food_included:true,special_requests:'Garden setup, evening lighting',cars_requested:true,cars_selected:['Rolls-Royce Silver Shadow','Jaguar Mark 2'],cars_hours:8,cars_pickup:'Utanu Farm gates',status:'pending',total_amount:290000,created_at:'2026-03-18T11:00:00Z'},
+  {id:'bk-010',name:'Naivas Staff Party',phone:'0700123456',email:'hr@naivas.co.ke',type:'catering',booking_date:'2026-04-25',time_slot:'12:00 PM',people:80,food_included:true,special_requests:'Halal options needed',status:'pending',total_amount:136000,created_at:'2026-03-18T13:00:00Z'},
+];
+const DEMO_PAYMENTS=[
+  {booking_id:'bk-002',phone:'0722234567',amount:36000,mpesa_receipt_number:'RKT92X1Y8A',status:'completed',initiated_at:'2026-03-16T14:25:00Z'},
+  {booking_id:'bk-003',phone:'0733345678',amount:120400,mpesa_receipt_number:'RKT85P2Z9B',status:'completed',initiated_at:'2026-03-15T10:10:00Z'},
+  {booking_id:'bk-005',phone:'0755567890',amount:1000,mpesa_receipt_number:'RKT11Q3W4C',status:'completed',initiated_at:'2026-03-10T09:20:00Z'},
+  {booking_id:'bk-008',phone:'0788901234',amount:97000,mpesa_receipt_number:'RKT73D8Y1F',status:'completed',initiated_at:'2026-03-17T09:10:00Z'},
+  {booking_id:'bk-001',phone:'0712345678',amount:10800,mpesa_receipt_number:null,status:'pending',initiated_at:'2026-03-17T08:35:00Z'},
+];
+const DEMO_MESSAGES=[
+  {id:'m-001',name:'Grace Njoroge',phone:'0700112233',email:'grace@gmail.com',subject:'Group booking enquiry',message:'We are a group of 20 adults. Do you accommodate adult-only groups?',is_read:false,created_at:'2026-03-17T10:00:00Z'},
+  {id:'m-002',name:'Peter Kariuki',phone:'0700334455',email:null,subject:'Kids program age limit',message:'My son is 2 years old. Is he eligible for the kids program?',is_read:false,created_at:'2026-03-16T08:30:00Z'},
+  {id:'m-003',name:'Amina Said',phone:'0700556677',email:'amina@gmail.com',subject:'Accessibility',message:'Does the farm have accessible paths for wheelchairs?',is_read:true,created_at:'2026-03-14T15:45:00Z'},
+  {id:'m-004',name:'Bosco Otieno',phone:'0700778899',email:'bosco@gmail.com',subject:'Outside catering enquiry',message:'We need catering for 200 people at our Westlands office. Do you cater off-site?',is_read:false,created_at:'2026-03-18T09:00:00Z'},
+];
+const DEMO_CHILDREN=[
+  {id:'c-001',name:'Toto Kamau',age:8,age_group:'junior',parent_name:'Wanjiku Kamau',parent_phone:'0712345678',enrolled_at:'2026-02-01T00:00:00Z'},
+  {id:'c-002',name:'Imani Mwangi',age:6,age_group:'toddler',parent_name:'John Mwangi',parent_phone:'0723123456',enrolled_at:'2026-02-08T00:00:00Z'},
+  {id:'c-003',name:'Zawadi Omondi',age:11,age_group:'senior',parent_name:'Achieng Omondi',parent_phone:'0744456789',enrolled_at:'2026-01-20T00:00:00Z'},
+  {id:'c-004',name:'Baraka Njoroge',age:9,age_group:'junior',parent_name:'Grace Njoroge',parent_phone:'0700112233',enrolled_at:'2026-02-15T00:00:00Z'},
+  {id:'c-005',name:'Amara Hassan',age:13,age_group:'senior',parent_name:'Fatuma Hassan',parent_phone:'0766678901',enrolled_at:'2026-01-10T00:00:00Z'},
+  {id:'c-006',name:'Levi Muturi',age:7,age_group:'junior',parent_name:'James Muturi',parent_phone:'0755567890',enrolled_at:'2026-03-01T00:00:00Z'},
+];
+const DEMO_LEADERBOARD=[
+  {rank:1,name:'Zawadi Omondi',age_group:'senior',sessions_attended:6,total_points:380,badge:'Champion'},
+  {rank:2,name:'Amara Hassan',age_group:'senior',sessions_attended:5,total_points:310,badge:'Explorer'},
+  {rank:3,name:'Baraka Njoroge',age_group:'junior',sessions_attended:4,total_points:240,badge:'Grower'},
+  {rank:4,name:'Toto Kamau',age_group:'junior',sessions_attended:3,total_points:180,badge:'Farm Friend'},
+  {rank:5,name:'Levi Muturi',age_group:'junior',sessions_attended:2,total_points:90,badge:'Seedling'},
+  {rank:6,name:'Imani Mwangi',age_group:'toddler',sessions_attended:2,total_points:60,badge:'Seedling'},
+];
+const DEMO_SESSIONS=[
+  {id:'s-001',title:'Farm Animals Day',session_date:'2026-03-08',age_group:'junior',activities:['Animal feeding','Milking demo','Farm walk'],max_children:20},
+  {id:'s-002',title:'Seed to Plate',session_date:'2026-03-15',age_group:'senior',activities:['Planting','Harvesting','Cooking basics'],max_children:15},
+  {id:'s-003',title:'Tiny Explorers',session_date:'2026-03-22',age_group:'toddler',activities:['Sensory garden','Story time','Mud play'],max_children:12},
+  {id:'s-004',title:'Nature Art Workshop',session_date:'2026-04-05',age_group:'all',activities:['Leaf prints','Natural dyes','Sculpture'],max_children:25},
+];
+const DEMO_POSTS=[
+  {id:'p-001',title:'What Happens When 80 Schoolkids Discover Where Their Food Comes From',author:'Utanu Farm',is_published:true,created_at:'2026-03-10T09:00:00Z'},
+  {id:'p-002',title:'The Long Rains Are Back — What\'s Growing',author:'Utanu Farm',is_published:true,created_at:'2026-02-28T09:00:00Z'},
+  {id:'p-003',title:'Draft: New Kids Program Curriculum',author:'Utanu Farm',is_published:false,created_at:'2026-03-15T09:00:00Z'},
+];
+const DEMO_SERVICES=[
+  {id:'e-001',title:'Family Farm Day',category:'family',price_per_person:1500,max_capacity:40,duration_hours:6,is_active:true},
+  {id:'e-002',title:'School Field Trip',category:'school',price_per_person:800,max_capacity:80,duration_hours:4,is_active:true},
+  {id:'e-003',title:'Corporate Team Building',category:'corporate',price_per_person:3500,max_capacity:60,duration_hours:8,is_active:true},
+  {id:'e-004',title:'Birthday Bash',category:'birthday',price_per_person:2000,max_capacity:30,duration_hours:5,is_active:true},
+  {id:'e-005',title:'Sunrise Nature Walk',category:'general',price_per_person:500,max_capacity:20,duration_hours:2,is_active:true},
+  {id:'e-006',title:'Weekend Bootcamp',category:'bootcamp',price_per_person:2500,max_capacity:50,duration_hours:6,is_active:true},
+  {id:'e-007',title:'Event Hosting',category:'event',price_per_person:1800,max_capacity:300,duration_hours:12,is_active:true},
+  {id:'e-008',title:'Outside Catering',category:'catering',price_per_person:950,max_capacity:500,duration_hours:4,is_active:true},
+];
+
+let menuData={price:800,label:'Farm-to-table meal',note:'Vegetarian options available. Add dietary needs in special requests.',courses:['To Start','Main Course','To Finish'],dishes:[
+  {course:'To Start',name:'Garden vegetable soup',desc:'Slow-cooked with farm herbs & bone broth'},
+  {course:'To Start',name:'Fresh passion fruit juice',desc:'Pressed from our orchard, no added sugar'},
+  {course:'Main Course',name:'Slow-roasted farm chicken',desc:'Free-range, marinated in local spices & lemon'},
+  {course:'Main Course',name:'Githeri wa shamba',desc:'Heirloom beans & maize grown on the farm'},
+  {course:'Main Course',name:'Steamed seasonal greens',desc:'Sukuma wiki, managu, or terere by season'},
+  {course:'Main Course',name:'Ugali ya wimbi',desc:'Finger millet, stone-ground on site'},
+  {course:'To Finish',name:'Roasted sweet potato & honey',desc:'Served warm with raw Utanu honey'},
+  {course:'To Finish',name:'Seasonal fruit platter',desc:'Picked the morning of your visit'},
+]};
+
+let allBookings=[],allPayments=[],allMessages=[],allServices=[],allPosts=[],currentBookingId=null;
+
+async function sbFetch(t,opts={}){const q=sb.from(t).select('*');if(opts.order)q.order(opts.order,{ascending:false});const{data,error}=await q;if(error)throw new Error(error.message);return data||[];}
+async function sbPatch(t,id,d){if(isDemo())return;const{error}=await sb.from(t).update(d).eq('id',id);if(error)console.error('patch error',error);}
+
+function doLogin(){const e=document.getElementById('login-email').value.trim(),p=document.getElementById('login-password').value;if(!e||!p)return;document.getElementById('admin-name-display').textContent=e.split('@')[0].replace(/\./g,' ').replace(/^\w/,c=>c.toUpperCase());document.getElementById('login-screen').classList.remove('active');if(!isDemo())document.getElementById('conn-status').textContent='Connected';loadAll();}
+function doLogout(){document.getElementById('login-screen').classList.add('active');}
+
+const viewMeta={dashboard:['Dashboard','Overview'],bookings:['Bookings','All reservations'],payments:['Payments','M-Pesa records'],messages:['Messages','Inbox'],kids:['Kids Program','Leaderboard & sessions'],blog:['Blog','Posts'],services:['Services','All service types'],karani:['Karani Classic Cars','Fleet & payout tracking'],menu:['Menu','Live farm menu'],settings:['Settings','Config']};
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('view-'+id).classList.add('active');const el=document.querySelector(`.nav-item[onclick="showView('${id}')"]`);if(el)el.classList.add('active');const[t,s]=viewMeta[id]||[id,''];document.getElementById('page-title').textContent=t;document.getElementById('page-sub').textContent='— '+s;({dashboard:renderDashboard,bookings:renderBookings,payments:renderPayments,messages:renderMessages,kids:renderKids,blog:renderBlog,services:renderServices,karani:renderKarani,menu:renderMenu,settings:renderSettings})[id]?.();}
+
+async function loadAll(){try{if(isDemo()){allBookings=DEMO_BOOKINGS;allPayments=DEMO_PAYMENTS;allMessages=DEMO_MESSAGES;allServices=DEMO_SERVICES;allPosts=DEMO_POSTS;}else{const[b,p,m,e,po]=await Promise.all([sb.from('bookings').select('*').order('created_at',{ascending:false}),sb.from('payments').select('*').order('initiated_at',{ascending:false}),sb.from('contact_messages').select('*').order('created_at',{ascending:false}),sb.from('experiences').select('*'),sb.from('blog_posts').select('*').order('created_at',{ascending:false})]);if(b.data)allBookings=b.data;if(p.data)allPayments=p.data;if(m.data)allMessages=m.data;if(e.data)allServices=e.data;if(po.data)allPosts=po.data;}updateBadges();renderDashboard();}catch(err){showToast('error','Load failed: '+err.message);}}
+function updateBadges(){document.getElementById('pending-badge').textContent=allBookings.filter(b=>b.status==='pending').length;document.getElementById('msg-badge').textContent=allMessages.filter(m=>!m.is_read).length;}
+async function refreshAll(){const ic=document.getElementById('refresh-icon');ic.className='spin';ic.textContent=String.fromCharCode(8635);await loadAll();const a=document.querySelector('.nav-item.active');const id=a?.getAttribute('onclick')?.match(/'(\w+)'/)?.[1]||'dashboard';showView(id);ic.className='';ic.textContent=String.fromCharCode(8635);showToast('success','Refreshed');}
+
+function renderDashboard(){
+  const total=allBookings.length,pending=allBookings.filter(b=>b.status==='pending').length;
+  const mon=new Date().toISOString().slice(0,7);
+  const visitors=allBookings.filter(b=>b.booking_date?.startsWith(mon)&&b.status!=='cancelled').reduce((s,b)=>s+(b.people||0),0);
+  const revenue=allBookings.filter(b=>b.status==='confirmed').reduce((s,b)=>s+(b.total_amount||0),0);
+  document.getElementById('stat-total').textContent=total;
+  document.getElementById('stat-pending').textContent=pending;
+  document.getElementById('stat-visitors').textContent=visitors.toLocaleString();
+  document.getElementById('stat-revenue').textContent=revenue>=1000?(revenue/1000).toFixed(0)+'K':revenue;
+  document.getElementById('stat-pending-sub').textContent=pending===0?'All clear':pending+' need attention';
+  document.getElementById('stat-rev-sub').textContent=allBookings.filter(b=>b.status==='confirmed').length+' confirmed';
+  const months=[];for(let i=6;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+  const counts=months.map(m=>allBookings.filter(b=>b.booking_date?.startsWith(m)).length);
+  const maxC=Math.max(...counts,1);
+  document.getElementById('bar-chart').innerHTML=months.map((m,i)=>`<div class="bar-wrap"><div class="bar${i===6?' this':''}" style="height:${Math.round((counts[i]/maxC)*86)+4}px" title="${counts[i]}"></div><div class="bar-label">${m.slice(5)}</div></div>`).join('');
+  const tc={family:'#6b8f52',school:'#adc48a',corporate:'#7ab0c8',birthday:'#c4862a',general:'#d4b483',bootcamp:'#e07060',event:'#a090d8',catering:'#c4956a'};
+  const tl={family:'Family',school:'School',corporate:'Corporate',birthday:'Birthday',general:'Walk',bootcamp:'Bootcamp',event:'Event',catering:'Catering'};
+  const c2={};allBookings.forEach(b=>{c2[b.type]=(c2[b.type]||0)+1;});
+  const circ=2*Math.PI*38;let off=0;const ents=Object.entries(c2);
+  document.getElementById('donut-val').textContent=total;
+  for(let i=1;i<=8;i++){const el=document.getElementById('d'+i);el.setAttribute('stroke-dasharray','0 240');el.setAttribute('stroke-dashoffset','0');}
+  ents.forEach(([t,c],i)=>{if(i>=8)return;const f=c/total,dash=f*circ,el=document.getElementById('d'+(i+1));el.setAttribute('stroke',tc[t]||'#6b8f52');el.setAttribute('stroke-dasharray',`${dash} ${circ-dash}`);el.setAttribute('stroke-dashoffset',-off);off+=dash;});
+  document.getElementById('donut-legend').innerHTML=ents.map(([t,c])=>`<div class="legend-item"><div class="legend-dot" style="background:${tc[t]||'#6b8f52'}"></div><span>${tl[t]||t}</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text)">${c}</span></div>`).join('');
+  document.getElementById('recent-tbody').innerHTML=allBookings.slice(0,6).map(b=>`<tr onclick="openBookingPanel('${b.id}')"><td class="td-name">${escH(b.name)}</td><td><span class="badge badge-${b.type}">${b.type}</span></td><td class="td-mono">${b.booking_date||'—'}</td><td class="td-mono">${b.people}</td><td><span class="badge badge-${b.status}">${b.status}</span></td></tr>`).join('');
+}
+
+function renderBookings(data){const rows=data||allBookings;document.getElementById('bookings-count').textContent=rows.length;document.getElementById('bookings-tbody').innerHTML=rows.length?rows.map(b=>`<tr onclick="openBookingPanel('${b.id}')"><td class="td-mono" style="font-size:.7rem">${String(b.id).slice(0,8)}</td><td class="td-name">${escH(b.name)}</td><td class="td-phone">${escH(b.phone)}</td><td><span class="badge badge-${b.type}">${b.type}</span></td><td class="td-mono">${b.booking_date||'—'}</td><td class="td-mono">${b.people}</td><td style="color:var(--muted);font-size:.76rem">${b.food_included?'Yes':'—'}</td><td><span class="badge badge-${b.status}">${b.status}</span></td><td onclick="event.stopPropagation()">${b.status==='pending'?`<button class="row-action" onclick="updateStatus('${b.id}','confirmed')">Confirm</button>`:''} ${b.status!=='cancelled'&&b.status!=='completed'?`<button class="row-action danger" onclick="updateStatus('${b.id}','cancelled')">Cancel</button>`:''}</td></tr>`).join(''):'<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">&#128717;</div><div class="empty-text">No bookings found</div></div></td></tr>';}
+function filterBookings(){const q=document.getElementById('search-bookings').value.toLowerCase(),s=document.getElementById('filter-status').value,t=document.getElementById('filter-type').value;renderBookings(allBookings.filter(b=>(!q||b.name?.toLowerCase().includes(q)||b.phone?.includes(q))&&(!s||b.status===s)&&(!t||b.type===t)));}
+
+function renderPayments(){document.getElementById('payments-count').textContent=allPayments.length;document.getElementById('payments-tbody').innerHTML=allPayments.length?allPayments.map(p=>`<tr><td class="td-mono">${String(p.booking_id).slice(0,8)}</td><td class="td-phone">${escH(p.phone)}</td><td class="td-mono" style="color:var(--wheat)">KES ${Number(p.amount||0).toLocaleString()}</td><td class="td-mono">${p.mpesa_receipt_number||'<span style="color:var(--muted)">Pending</span>'}</td><td><span class="badge badge-${p.status}">${p.status}</span></td><td class="td-mono">${(p.initiated_at||'').slice(0,16).replace('T',' ')}</td></tr>`).join(''):'<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">&#128179;</div><div class="empty-text">No records</div></div></td></tr>';}
+
+function renderMessages(){document.getElementById('messages-count').textContent=allMessages.length;document.getElementById('messages-tbody').innerHTML=allMessages.map(m=>`<tr style="${!m.is_read?'background:rgba(107,143,82,.04)':''}"><td class="td-name" style="${!m.is_read?'color:var(--cream)':''}">${escH(m.name)}${!m.is_read?'<span style="width:6px;height:6px;border-radius:50%;background:var(--fern);display:inline-block;margin-left:6px;vertical-align:middle"></span>':''}</td><td class="td-mono" style="font-size:.76rem">${escH(m.phone||m.email||'—')}</td><td style="font-size:.83rem">${escH(m.subject||'—')}</td><td style="font-size:.8rem;color:var(--textdim);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(m.message||'')}</td><td class="td-mono">${(m.created_at||'').slice(0,10)}</td><td>${m.is_read?'<span style="color:var(--muted);font-size:.75rem">Read</span>':`<button class="row-action" onclick="markRead('${m.id}')">Mark read</button>`}</td></tr>`).join('');}
+function markRead(id){const m=allMessages.find(m=>m.id===id);if(m){m.is_read=true;updateBadges();renderMessages();}if(!isDemo())sbPatch('contact_messages',id,{is_read:true});}
+
+function renderKids(){document.getElementById('kids-count').textContent=DEMO_CHILDREN.length;document.getElementById('sessions-count').textContent=DEMO_SESSIONS.length;document.getElementById('points-total').textContent=DEMO_LEADERBOARD.reduce((s,c)=>s+c.total_points,0);renderLeaderboard();renderChildrenTable();renderSessionsTable();}
+function showKidsTab(tab,btn){document.querySelectorAll('.kids-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('kids-tab-leaderboard').style.display=tab==='leaderboard'?'':'none';document.getElementById('kids-tab-children').style.display=tab==='children'?'':'none';document.getElementById('kids-tab-sessions').style.display=tab==='sessions'?'':'none';}
+function renderLeaderboard(){document.getElementById('leaderboard-tbody').innerHTML=DEMO_LEADERBOARD.map(c=>`<tr><td><span style="font-family:'JetBrains Mono',monospace;font-size:.88rem;color:${c.rank===1?'var(--wheat)':c.rank===2?'var(--sage)':c.rank===3?'var(--sand)':'var(--muted)'}">${c.rank===1?'#1':c.rank===2?'#2':c.rank===3?'#3':'#'+c.rank}</span></td><td class="td-name">${escH(c.name)}</td><td><span class="badge badge-${c.age_group==='junior'?'family':c.age_group==='senior'?'school':'general'}">${c.age_group}</span></td><td class="td-mono">${c.sessions_attended}</td><td><span style="font-family:'JetBrains Mono',monospace;color:var(--wheat);font-weight:600">${c.total_points} pts</span></td><td style="font-size:.8rem;color:var(--textdim)">${escH(c.badge||'—')}</td></tr>`).join('');}
+function renderChildrenTable(){document.getElementById('children-count').textContent=DEMO_CHILDREN.length;document.getElementById('children-tbody').innerHTML=DEMO_CHILDREN.map(c=>`<tr><td class="td-name">${escH(c.name)}</td><td class="td-mono">${c.age}</td><td><span class="badge badge-${c.age_group==='junior'?'family':c.age_group==='senior'?'school':'general'}">${c.age_group}</span></td><td style="font-size:.82rem">${escH(c.parent_name||'—')}</td><td class="td-phone">${escH(c.parent_phone)}</td><td class="td-mono">${(c.enrolled_at||'').slice(0,10)}</td></tr>`).join('');}
+function renderSessionsTable(){document.getElementById('sessions-tbody').innerHTML=DEMO_SESSIONS.map(s=>`<tr><td class="td-name">${escH(s.title)}</td><td class="td-mono">${s.session_date}</td><td><span class="badge badge-${s.age_group==='toddler'?'general':s.age_group==='junior'?'family':s.age_group==='senior'?'school':'corporate'}">${s.age_group}</span></td><td style="font-size:.8rem;color:var(--textdim)">${(s.activities||[]).join(', ')}</td><td class="td-mono">${s.max_children}</td></tr>`).join('');}
+
+function renderBlog(){document.getElementById('blog-count').textContent=allPosts.length;document.getElementById('blog-tbody').innerHTML=allPosts.map(p=>`<tr><td class="td-name" style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(p.title)}</td><td style="font-size:.82rem">${escH(p.author||'—')}</td><td>${p.is_published?'<span class="badge badge-confirmed">Published</span>':'<span class="badge badge-pending">Draft</span>'}</td><td class="td-mono">${(p.created_at||'').slice(0,10)}</td><td><button class="row-action" onclick="togglePublish('${p.id}',${!p.is_published})">${p.is_published?'Unpublish':'Publish'}</button></td></tr>`).join('');}
+function togglePublish(id,val){const p=allPosts.find(p=>p.id===id);if(p){p.is_published=val;renderBlog();}if(!isDemo())sbPatch('blog_posts',id,{is_published:val});showToast('success',val?'Published':'Unpublished');}
+
+let editingSvcId=null;
+function renderServices(){document.getElementById('services-count').textContent=allServices.length;document.getElementById('services-tbody').innerHTML=allServices.map(e=>`<tr><td class="td-name">${escH(e.title)}</td><td><span class="badge badge-${e.category}">${e.category}</span></td><td class="td-mono" style="color:var(--wheat)">KES ${Number(e.price_per_person||0).toLocaleString()}</td><td class="td-mono">${e.max_capacity} pax</td><td class="td-mono">${e.duration_hours}h</td><td>${e.is_active?'<span style="color:var(--fern);font-size:.78rem">Active</span>':'<span style="color:var(--muted);font-size:.78rem">Off</span>'}</td><td onclick="event.stopPropagation()"><button class="row-action" onclick="openServiceEditor('${e.id}')">Edit</button> <button class="row-action danger" onclick="toggleSvcActive('${e.id}')">${e.is_active?'Deactivate':'Activate'}</button></td></tr>`).join('');}
+function openServiceEditor(id){editingSvcId=id||null;const s=id?allServices.find(e=>e.id===id):null;document.getElementById('svc-editor-title').textContent=s?'Edit Service':'New Service';document.getElementById('svc-title').value=s?.title||'';document.getElementById('svc-category').value=s?.category||'family';document.getElementById('svc-price').value=s?.price_per_person||'';document.getElementById('svc-capacity').value=s?.max_capacity||'';document.getElementById('svc-duration').value=s?.duration_hours||'';document.getElementById('svc-desc').value=s?.description||'';document.getElementById('service-editor').style.display='';document.getElementById('service-editor').scrollIntoView({behavior:'smooth'});}
+function closeServiceEditor(){document.getElementById('service-editor').style.display='none';editingSvcId=null;}
+function toggleSvcActive(id){const s=allServices.find(e=>e.id===id);if(s){s.is_active=!s.is_active;renderServices();showToast('success',s.is_active?'Activated':'Deactivated');}}
+function saveService(){const title=document.getElementById('svc-title').value.trim(),cat=document.getElementById('svc-category').value,price=parseFloat(document.getElementById('svc-price').value)||0,cap=parseInt(document.getElementById('svc-capacity').value)||0,dur=parseFloat(document.getElementById('svc-duration').value)||0,desc=document.getElementById('svc-desc').value.trim();if(!title||!price){showToast('error','Title and price required');return;}if(editingSvcId){const s=allServices.find(e=>e.id===editingSvcId);if(s)Object.assign(s,{title,category:cat,price_per_person:price,max_capacity:cap,duration_hours:dur,description:desc});showToast('success','Updated');}else{allServices.push({id:'e-'+Date.now(),title,category:cat,price_per_person:price,max_capacity:cap,duration_hours:dur,description:desc,is_active:true});showToast('success','Service added');}renderServices();closeServiceEditor();}
+
+function renderMenu(){document.getElementById('menu-price').value=menuData.price;document.getElementById('menu-label').value=menuData.label;document.getElementById('menu-note').value=menuData.note;renderCoursesList();renderDishesList();}
+function renderCoursesList(){document.getElementById('courses-list').innerHTML=menuData.courses.map((c,i)=>`<div class="menu-section-row"><input class="field-input" value="${escH(c)}" onchange="menuData.courses[${i}]=this.value" style="font-size:.83rem;padding:7px 10px"><button class="del-btn" onclick="removeCourse(${i})">x</button></div>`).join('')+`<button class="add-row-btn" onclick="addCourse()">+ Add course</button>`;}
+function renderDishesList(){document.getElementById('dishes-list').innerHTML=menuData.dishes.length?menuData.dishes.map((d,i)=>`<div class="menu-item-row"><select class="field-input" onchange="menuData.dishes[${i}].course=this.value" style="font-size:.8rem;padding:7px 8px">${menuData.courses.map(c=>`<option value="${escH(c)}"${d.course===c?' selected':''}>${escH(c)}</option>`).join('')}</select><input class="field-input" placeholder="Dish name" value="${escH(d.name)}" onchange="menuData.dishes[${i}].name=this.value" style="font-size:.83rem;padding:7px 10px"><input class="field-input" placeholder="Description" value="${escH(d.desc)}" onchange="menuData.dishes[${i}].desc=this.value" style="font-size:.83rem;padding:7px 10px"><button class="del-btn" onclick="removeDish(${i})">x</button></div>`).join(''):'<p style="color:var(--muted);font-size:.83rem;padding:12px 0">No dishes yet.</p>';}
+function addCourse(){menuData.courses.push('New Course');renderCoursesList();}
+function removeCourse(i){if(menuData.courses.length<=1){showToast('error','Need at least one course');return;}menuData.courses.splice(i,1);renderCoursesList();renderDishesList();}
+function addDish(){menuData.dishes.push({course:menuData.courses[0]||'',name:'',desc:''});renderDishesList();}
+function removeDish(i){menuData.dishes.splice(i,1);renderDishesList();}
+function saveMenuSettings(){menuData.price=parseInt(document.getElementById('menu-price').value)||800;menuData.label=document.getElementById('menu-label').value.trim();menuData.note=document.getElementById('menu-note').value.trim();showToast('success','Meal pricing saved');}
+function saveMenu(){showToast('success','Menu saved — live on booking form');}
+
+function renderSettings(){const u=document.getElementById('cfg-sb-url'),k=document.getElementById('cfg-sb-key');if(!isDemo()){u.value=SUPABASE_URL;k.value='••••••••';}document.getElementById('sb-status-badge').textContent=isDemo()?'Demo mode':'Connected';document.getElementById('sb-status-badge').className='badge '+(isDemo()?'badge-pending':'badge-confirmed');}
+function saveCfg(s){showToast('success',s.charAt(0).toUpperCase()+s.slice(1)+' settings saved');}
+async function testSupabase(){const url=document.getElementById('cfg-sb-url').value.trim(),key=document.getElementById('cfg-sb-key').value.trim();if(!url||!key||key==='••••••••'){showToast('error','Enter URL and key first');return;}try{const testSb=supabase.createClient(url,key);const{error}=await testSb.from('bookings').select('id').limit(1);showToast(error?'error':'success',error?'Query failed: '+error.message:'Connection successful');}catch(e){showToast('error','Cannot reach: '+e.message);}}
+function applySupabase(){const url=document.getElementById('cfg-sb-url').value.trim(),key=document.getElementById('cfg-sb-key').value.trim();if(!url||!key||key==='••••••••'){showToast('error','Enter URL and key first');return;}localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);SUPABASE_URL=url;SUPABASE_ANON_KEY=key;sb=supabase.createClient(url,key);document.getElementById('conn-status').textContent='Connected';showToast('success','Applied');setTimeout(()=>loadAll(),500);}
+
+function openBookingPanel(id){
+  const b=allBookings.find(b=>b.id===id);if(!b)return;
+  currentBookingId=id;
+  const pay=allPayments.find(p=>p.booking_id===id);
+  document.getElementById('panel-title').textContent='Booking — '+String(id).slice(0,8).toUpperCase();
+  document.getElementById('panel-body').innerHTML=`<div class="panel-section"><div class="panel-section-title">Guest</div><div class="detail-row"><div class="detail-key">Name</div><div class="detail-val highlight">${escH(b.name)}</div></div><div class="detail-row"><div class="detail-key">Phone</div><div class="detail-val mono">${escH(b.phone)}</div></div><div class="detail-row"><div class="detail-key">Email</div><div class="detail-val">${escH(b.email||'—')}</div></div></div><div class="panel-section"><div class="panel-section-title">Booking</div><div class="detail-row"><div class="detail-key">Service</div><div class="detail-val"><span class="badge badge-${b.type}">${b.type}</span></div></div><div class="detail-row"><div class="detail-key">Date</div><div class="detail-val mono">${b.booking_date||'—'}</div></div><div class="detail-row"><div class="detail-key">Time slot</div><div class="detail-val">${b.time_slot||'Not specified'}</div></div><div class="detail-row"><div class="detail-key">People</div><div class="detail-val highlight">${b.people}</div></div><div class="detail-row"><div class="detail-key">Farm meal</div><div class="detail-val">${b.food_included?'Yes — KES '+(b.people*(menuData.price||800)).toLocaleString():'No'}</div></div><div class="detail-row"><div class="detail-key">Est. Total</div><div class="detail-val highlight" style="color:var(--wheat)">KES ${Number(b.total_amount||0).toLocaleString()}</div></div>${b.special_requests?`<div class="detail-row"><div class="detail-key">Notes</div><div class="detail-val" style="font-style:italic;color:var(--textdim)">"${escH(b.special_requests)}"</div></div>`:''}${b.cars_requested&&b.cars_selected&&b.cars_selected.length>0?`<div class="panel-section"><div class="panel-section-title">Classic Cars — Mr. Karani</div><div class="detail-row"><div class="detail-key">Cars</div><div class="detail-val highlight">${b.cars_selected.join(', ')}</div></div><div class="detail-row"><div class="detail-key">Duration</div><div class="detail-val">${b.cars_hours||4} hours</div></div><div class="detail-row"><div class="detail-key">Pickup</div><div class="detail-val">${escH(b.cars_pickup||'TBC')}</div></div></div>`:''}</div><div class="panel-section"><div class="panel-section-title">Payment</div><div class="detail-row"><div class="detail-key">Status</div><div class="detail-val"><span class="badge badge-${b.status}">${b.status}</span></div></div><div class="detail-row"><div class="detail-key">Booked</div><div class="detail-val mono">${(b.created_at||'').slice(0,16).replace('T',' ')}</div></div>${pay?`<div class="detail-row"><div class="detail-key">M-Pesa</div><div class="detail-val"><span class="badge badge-${pay.status}">${pay.status}</span></div></div><div class="detail-row"><div class="detail-key">Receipt</div><div class="detail-val mono">${pay.mpesa_receipt_number||'Awaiting'}</div></div>`:'<div class="detail-row"><div class="detail-key">Payment</div><div class="detail-val" style="color:var(--muted)">No record</div></div>'}</div>`;
+  document.getElementById('panel-footer').innerHTML=`<a class="call-btn" href="tel:${b.phone}">Call ${escH(b.phone)}</a><a class="call-btn" href="https://wa.me/${b.phone.replace(/^0/,'254').replace(/\s/g,'')}?text=Hello+${encodeURIComponent(b.name.split(' ')[0])}%2C+Utanu+Farm+re+booking+${b.booking_date}." target="_blank">WhatsApp</a><div class="status-change-group">${b.status!=='confirmed'?`<button class="status-btn confirm" onclick="updateStatus('${b.id}','confirmed')">Confirm</button>`:''} ${b.status!=='completed'?`<button class="status-btn complete" onclick="updateStatus('${b.id}','completed')">Done</button>`:''} ${b.status!=='cancelled'?`<button class="status-btn cancel" onclick="updateStatus('${b.id}','cancelled')">Cancel</button>`:''}</div>`;
+  document.getElementById('detail-overlay').classList.add('open');
+  document.getElementById('detail-panel').classList.add('open');
+}
+function closePanel(){document.getElementById('detail-overlay').classList.remove('open');document.getElementById('detail-panel').classList.remove('open');currentBookingId=null;}
+async function updateStatus(id,status){const b=allBookings.find(b=>b.id===id);if(!b)return;b.status=status;if(!isDemo())await sbPatch('bookings',id,{status});updateBadges();renderBookings();renderDashboard();if(currentBookingId===id)openBookingPanel(id);showToast('success','Booking '+status);}
+
+function exportCSV(){const h=['ID','Name','Phone','Email','Type','Date','Slot','People','Meal','Status','KES','Created'];const r=allBookings.map(b=>[b.id,b.name,b.phone,b.email||'',b.type,b.booking_date,b.time_slot||'',b.people,b.food_included?'Yes':'No',b.status,b.total_amount||'',(b.created_at||'').slice(0,16)]);const csv=[h,...r].map(row=>row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='utanu_bookings_'+new Date().toISOString().slice(0,10)+'.csv';a.click();showToast('success','CSV exported');}
+
+
+// ── KARANI FLEET ──
+const KARANI_FLEET = [
+  {id:'merc-230', name:'Mercedes-Benz 230', year:'1968', emoji:'&#128663;', color:'Ivory White', price_per_hour:8000, capacity:'4 pax', available:true},
+  {id:'roller-sw', name:'Rolls-Royce Silver Shadow', year:'1972', emoji:'&#128663;', color:'Champagne Gold', price_per_hour:18000, capacity:'4 pax', available:true},
+  {id:'jaguar-mk2', name:'Jaguar Mark 2', year:'1964', emoji:'&#128663;', color:'British Racing Green', price_per_hour:12000, capacity:'4 pax', available:true},
+  {id:'ford-mustang', name:'Ford Mustang Fastback', year:'1966', emoji:'&#128663;', color:'Candy Apple Red', price_per_hour:14000, capacity:'2 pax', available:true},
+  {id:'vw-beetle', name:'Volkswagen Beetle', year:'1974', emoji:'&#128663;', color:'Sky Blue', price_per_hour:6000, capacity:'3 pax', available:true},
+  {id:'landrover-s2', name:'Land Rover Series II', year:'1962', emoji:'&#128665;', color:'Olive Green', price_per_hour:9000, capacity:'6 pax', available:true},
+  {id:'peugeot-404', name:'Peugeot 404 Cabriolet', year:'1969', emoji:'&#128663;', color:'Pearl White', price_per_hour:7500, capacity:'3 pax', available:true},
+  {id:'austin-cambridge', name:'Austin Cambridge', year:'1961', emoji:'&#128663;', color:'Two-Tone Blue/White', price_per_hour:5500, capacity:'4 pax', available:true},
+];
+
+function renderKarani() {
+  // Fleet grid
+  document.getElementById('karani-fleet-grid').innerHTML = KARANI_FLEET.map(car => `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,var(--bg4),var(--bg3));padding:20px;text-align:center;font-size:2.2rem">${car.emoji}</div>
+      <div style="padding:12px">
+        <div style="font-weight:600;color:var(--cream);font-size:.9rem">${car.name}</div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:2px">${car.year} &middot; ${car.color}</div>
+        <div style="font-size:.78rem;color:var(--wheat);font-weight:500;margin-top:6px">KES ${car.price_per_hour.toLocaleString()} / hr</div>
+        <div style="font-size:.73rem;color:var(--muted);margin-top:2px">${car.capacity}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+          <span style="font-size:.72rem;color:${car.available?'var(--fern)':'var(--red)'}">${car.available ? '&#9679; Available' : '&#9675; Unavailable'}</span>
+          <button class="row-action" onclick="toggleCarAvail('${car.id}')">${car.available ? 'Mark off' : 'Mark on'}</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Count bookings with cars
+  const carBookings = allBookings.filter(b => b.cars_requested && b.cars_selected && b.cars_selected.length > 0);
+  document.getElementById('karani-bookings-count').textContent = carBookings.length;
+  document.getElementById('karani-car-bookings-count').textContent = carBookings.length;
+
+  let totalHours = 0, totalPayout = 0;
+  carBookings.forEach(b => {
+    const hrs = b.cars_hours || 4;
+    totalHours += hrs;
+    (b.cars_selected || []).forEach(carName => {
+      const car = KARANI_FLEET.find(c => c.name === carName);
+      if (car) totalPayout += car.price_per_hour * hrs;
+    });
+  });
+  document.getElementById('karani-hours').textContent = totalHours;
+  document.getElementById('karani-payout').textContent = totalPayout >= 1000 ? (totalPayout/1000).toFixed(0)+'K' : totalPayout;
+
+  document.getElementById('karani-tbody').innerHTML = carBookings.length
+    ? carBookings.map(b => {
+        const hrs = b.cars_hours || 4;
+        let carCost = 0;
+        (b.cars_selected || []).forEach(name => {
+          const car = KARANI_FLEET.find(c => c.name === name);
+          if (car) carCost += car.price_per_hour * hrs;
+        });
+        return `<tr onclick="openBookingPanel('${b.id}')">
+          <td class="td-name">${escH(b.name)}</td>
+          <td class="td-mono">${b.booking_date || '—'}</td>
+          <td><span class="badge badge-${b.type}">${b.type}</span></td>
+          <td style="font-size:.83rem;color:var(--cream)">${(b.cars_selected || []).join(', ') || '—'}</td>
+          <td class="td-mono">${hrs}h</td>
+          <td style="font-size:.8rem;color:var(--textdim)">${escH(b.cars_pickup || '—')}</td>
+          <td class="td-mono" style="color:var(--wheat)">KES ${carCost.toLocaleString()}</td>
+          <td><span class="badge badge-${b.status}">${b.status}</span></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">&#127950;</div><div class="empty-text">No classic car bookings yet</div></div></td></tr>';
+}
+
+function toggleCarAvail(id) {
+  const car = KARANI_FLEET.find(c => c.id === id);
+  if (car) { car.available = !car.available; renderKarani(); showToast('success', car.name + ' ' + (car.available ? 'marked available' : 'marked unavailable')); }
+}
+
+function exportKaraniCSV() {
+  const carBookings = allBookings.filter(b => b.cars_requested && b.cars_selected && b.cars_selected.length > 0);
+  const h = ['Guest','Phone','Date','Type','Cars','Hours','Pickup','Car Cost (KES)','Status'];
+  const rows = carBookings.map(b => {
+    const hrs = b.cars_hours || 4;
+    let cost = 0;
+    (b.cars_selected || []).forEach(name => { const car = KARANI_FLEET.find(c => c.name === name); if (car) cost += car.price_per_hour * hrs; });
+    return [b.name, b.phone, b.booking_date, b.type, (b.cars_selected||[]).join(' + '), hrs, b.cars_pickup||'', cost, b.status];
+  });
+  const csv = [h, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'karani_payout_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('success', 'Karani payout CSV exported');
+}
+
+let toastTimer;
+function showToast(type,msg){const el=document.getElementById('toast');el.textContent=({success:'+ ',error:'x ',info:'i '})[type]+msg;el.className='toast '+type+' show';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3500);}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();if((e.metaKey||e.ctrlKey)&&e.key==='r'){e.preventDefault();refreshAll();}});
+</script>
+</body>
+</html>
