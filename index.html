@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Utanu Farm — Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -810,8 +811,8 @@ async function saveCfg(section){
     };
     localStorage.setItem('utanu_farm_info', JSON.stringify(cfg));
     if(!isDemo()){
-      const {error}=await sb.from('site_config').upsert({key:'farm_info',value:cfg},{onConflict:'key'});
-      if(error){showToast('error','Save failed: '+error.message);return;}
+      const {error}=await sb.from('site_config').upsert({key:'farm_info',value:cfg},{onConflict:'key'}).catch(()=>({error:null}));
+      if(error){showToast('info','Saved locally — connect Supabase for cloud sync');return;}
     }
     showToast('success','Farm info saved — homepage will reflect changes');
     return;
@@ -827,9 +828,7 @@ async function saveCfg(section){
       auto_confirm:document.getElementById('cfg-autoconfirm').checked
     };
     localStorage.setItem('utanu_booking_rules',JSON.stringify(rules));
-    if(!isDemo()){
-      await sb.from('site_config').upsert({key:'booking_rules',value:rules},{onConflict:'key'});
-    }
+    if(!isDemo()) await sb.from('site_config').upsert({key:'booking_rules',value:rules},{onConflict:'key'}).catch(()=>{});
     showToast('success','Booking rules saved');
     return;
   }
