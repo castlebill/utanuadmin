@@ -222,6 +222,7 @@ textarea.field-input{resize:vertical;min-height:70px;line-height:1.5}
       <div class="nav-item" onclick="showView('bookings')"><span class="nav-icon">&#128197;</span><span>Bookings</span><span class="nav-badge" id="pending-badge">0</span></div>
       <div class="nav-item" onclick="showView('payments')"><span class="nav-icon">&#128179;</span><span>Payments</span></div>
       <div class="nav-item" onclick="showView('messages')"><span class="nav-icon">&#9993;</span><span>Messages</span><span class="nav-badge" id="msg-badge">0</span></div>
+      <div class="nav-item" onclick="showView('events')"><span class="nav-icon">&#127942;</span><span>Events</span></div>
     </div>
     <div class="nav-group">
       <div class="nav-group-label">Programs</div>
@@ -311,6 +312,100 @@ textarea.field-input{resize:vertical;min-height:70px;line-height:1.5}
         <div class="table-header"><span class="table-title">Contact Messages</span><span class="table-count" id="messages-count">0</span></div>
         <table><thead><tr><th>Name</th><th>Phone / Email</th><th>Subject</th><th>Message</th><th>Date</th><th>Read</th></tr></thead>
         <tbody id="messages-tbody"></tbody></table>
+      </div>
+    </div>
+
+
+    <!-- EVENTS -->
+    <div class="view" id="view-events">
+      <div class="table-card" style="margin-bottom:16px">
+        <div class="table-header">
+          <span class="table-title">Events & Special Bookings</span>
+          <span class="table-count" id="events-count">0</span>
+          <div class="table-actions">
+            <select class="filter-select" id="filter-event-type" onchange="renderEvents()">
+              <option value="">All Types</option>
+              <option value="event">Wedding / Event</option>
+              <option value="birthday">Birthday</option>
+              <option value="corporate">Corporate</option>
+              <option value="catering">Catering</option>
+            </select>
+            <select class="filter-select" id="filter-event-status" onchange="renderEvents()">
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table><thead><tr>
+            <th>Guest / Organiser</th><th>Event Type</th><th>Date</th><th>Guests</th>
+            <th>Meal</th><th>Classic Cars</th><th>Est. Total</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="events-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Event detail editor -->
+      <div id="event-editor" style="display:none" class="settings-card full">
+        <div class="settings-card-header">
+          <div><div class="settings-card-title" id="event-editor-title">Event Details</div><div class="settings-card-sub">Manage logistics for this event booking</div></div>
+          <button class="topbar-btn" onclick="closeEventEditor()">&#10005; Close</button>
+        </div>
+        <div class="settings-body">
+          <div class="field-row">
+            <div class="field-group"><label class="field-label">Guest / Organiser</label><input class="field-input" id="ev-name" readonly></div>
+            <div class="field-group"><label class="field-label">Phone</label><input class="field-input" id="ev-phone" readonly></div>
+          </div>
+          <div class="field-row">
+            <div class="field-group"><label class="field-label">Event Type</label><input class="field-input" id="ev-type" readonly></div>
+            <div class="field-group"><label class="field-label">Date</label><input class="field-input" id="ev-date" readonly></div>
+          </div>
+          <div class="field-row">
+            <div class="field-group"><label class="field-label">Guests</label><input class="field-input" id="ev-people" readonly></div>
+            <div class="field-group"><label class="field-label">Time Slot</label><input class="field-input" id="ev-slot" readonly></div>
+          </div>
+          <!-- Meal section -->
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px">
+            <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px">Meal Details</div>
+            <div class="field-row">
+              <div class="field-group"><label class="field-label">Meal included</label><input class="field-input" id="ev-food" readonly></div>
+              <div class="field-group"><label class="field-label">Meal Cost (KES)</label><input class="field-input" id="ev-meal-cost" readonly></div>
+            </div>
+            <div class="field-group"><label class="field-label">Dishes Selected</label><div id="ev-dishes" style="font-size:.83rem;color:var(--textdim);padding:8px;background:var(--bg4);border-radius:var(--r3);min-height:32px"></div></div>
+          </div>
+          <!-- Classic cars section -->
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px" id="ev-cars-section">
+            <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px">Classic Cars — Mr. Karani</div>
+            <div class="field-row">
+              <div class="field-group"><label class="field-label">Cars Booked</label><div id="ev-cars" style="font-size:.83rem;color:var(--wheat);padding:8px;background:var(--bg4);border-radius:var(--r3);min-height:32px"></div></div>
+              <div class="field-group"><label class="field-label">Hours</label><input class="field-input" id="ev-cars-hours" readonly></div>
+            </div>
+            <div class="field-group"><label class="field-label">Pickup Location</label><input class="field-input" id="ev-cars-pickup" readonly></div>
+          </div>
+          <!-- Staff notes & status -->
+          <div class="field-row">
+            <div class="field-group"><label class="field-label">Special Requests</label><textarea class="field-input" id="ev-notes" readonly rows="2"></textarea></div>
+            <div class="field-group"><label class="field-label">Update Status</label>
+              <select class="field-input" id="ev-status-select">
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group"><label class="field-label">Staff Notes</label><textarea class="field-input" id="ev-staff-notes" placeholder="Logistics, caterer contact, setup notes..." rows="3"></textarea></div>
+            <div class="field-group"><label class="field-label">Estimated Total (KES)</label><input class="field-input" id="ev-total" readonly></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+            <button class="save-btn" onclick="saveEventDetails()">Save Changes</button>
+            <a id="ev-whatsapp-btn" href="#" target="_blank" style="background:var(--bg3);border:1px solid var(--border);color:var(--textdim);padding:9px 18px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;text-decoration:none;display:flex;align-items:center">&#128172; WhatsApp Guest</a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -598,8 +693,8 @@ async function sbPatch(t,id,d){if(isDemo())return;const{error}=await sb.from(t).
 function doLogin(){const e=document.getElementById('login-email').value.trim(),p=document.getElementById('login-password').value;if(!e||!p)return;document.getElementById('admin-name-display').textContent=e.split('@')[0].replace(/\./g,' ').replace(/^\w/,c=>c.toUpperCase());document.getElementById('login-screen').classList.remove('active');if(!isDemo())document.getElementById('conn-status').textContent='Connected';loadAll();}
 function doLogout(){document.getElementById('login-screen').classList.add('active');}
 
-const viewMeta={dashboard:['Dashboard','Overview'],bookings:['Bookings','All reservations'],payments:['Payments','M-Pesa records'],messages:['Messages','Inbox'],kids:['Kids Program','Leaderboard & sessions'],blog:['Blog','Posts'],services:['Services','All service types'],karani:['Karani Classic Cars','Fleet & payout tracking'],menu:['Menu','Live farm menu'],settings:['Settings','Config']};
-function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('view-'+id).classList.add('active');const el=document.querySelector(`.nav-item[onclick="showView('${id}')"]`);if(el)el.classList.add('active');const[t,s]=viewMeta[id]||[id,''];document.getElementById('page-title').textContent=t;document.getElementById('page-sub').textContent='— '+s;({dashboard:renderDashboard,bookings:renderBookings,payments:renderPayments,messages:renderMessages,kids:renderKids,blog:renderBlog,services:renderServices,karani:renderKarani,menu:renderMenu,settings:renderSettings})[id]?.();}
+const viewMeta={dashboard:['Dashboard','Overview'],bookings:['Bookings','All reservations'],payments:['Payments','M-Pesa records'],messages:['Messages','Inbox'],events:['Events','Weddings, birthdays & corporate events'],kids:['Kids Program','Leaderboard & sessions'],blog:['Blog','Posts'],services:['Services','All service types'],karani:['Karani Classic Cars','Fleet & payout tracking'],menu:['Menu','Live farm menu'],settings:['Settings','Config']};
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('view-'+id).classList.add('active');const el=document.querySelector(`.nav-item[onclick="showView('${id}')"]`);if(el)el.classList.add('active');const[t,s]=viewMeta[id]||[id,''];document.getElementById('page-title').textContent=t;document.getElementById('page-sub').textContent='— '+s;({dashboard:renderDashboard,bookings:renderBookings,payments:renderPayments,messages:renderMessages,events:renderEvents,kids:renderKids,blog:renderBlog,services:renderServices,karani:renderKarani,menu:renderMenu,settings:renderSettings})[id]?.();}
 
 async function loadAll(){try{if(isDemo()){allBookings=DEMO_BOOKINGS;allPayments=DEMO_PAYMENTS;allMessages=DEMO_MESSAGES;allServices=DEMO_SERVICES;allPosts=DEMO_POSTS;}else{const[b,p,m,e,po]=await Promise.all([sb.from('bookings').select('*').order('created_at',{ascending:false}),sb.from('payments').select('*').order('initiated_at',{ascending:false}),sb.from('contact_messages').select('*').order('created_at',{ascending:false}),sb.from('experiences').select('*'),sb.from('blog_posts').select('*').order('created_at',{ascending:false})]);if(b.data)allBookings=b.data;if(p.data)allPayments=p.data;if(m.data)allMessages=m.data;if(e.data)allServices=e.data;if(po.data)allPosts=po.data;}updateBadges();renderDashboard();}catch(err){showToast('error','Load failed: '+err.message);}}
 function updateBadges(){document.getElementById('pending-badge').textContent=allBookings.filter(b=>b.status==='pending').length;document.getElementById('msg-badge').textContent=allMessages.filter(m=>!m.is_read).length;}
@@ -662,8 +757,28 @@ function addCourse(){menuData.courses.push('New Course');renderCoursesList();}
 function removeCourse(i){if(menuData.courses.length<=1){showToast('error','Need at least one course');return;}menuData.courses.splice(i,1);renderCoursesList();renderDishesList();}
 function addDish(){menuData.dishes.push({course:menuData.courses[0]||'',name:'',desc:''});renderDishesList();}
 function removeDish(i){menuData.dishes.splice(i,1);renderDishesList();}
-function saveMenuSettings(){menuData.price=parseInt(document.getElementById('menu-price').value)||800;menuData.label=document.getElementById('menu-label').value.trim();menuData.note=document.getElementById('menu-note').value.trim();showToast('success','Meal pricing saved');}
-function saveMenu(){showToast('success','Menu saved — live on booking form');}
+function saveMenuSettings(){
+  menuData.price=parseInt(document.getElementById('menu-price').value)||800;
+  menuData.label=document.getElementById('menu-label').value.trim()||'Farm-to-table meal';
+  menuData.note=document.getElementById('menu-note').value.trim();
+  localStorage.setItem('utanu_menu', JSON.stringify(menuData));
+  if(!isDemo()) sb.from('site_config').upsert({key:'menu',value:menuData},{onConflict:'key'}).catch(()=>{});
+  showToast('success','Meal pricing saved — live on booking form');
+}
+function saveMenu(){
+  // Save to localStorage so homepage reads it live
+  const data = {
+    price: parseInt(document.getElementById('menu-price').value)||800,
+    label: document.getElementById('menu-label').value.trim()||'Farm-to-table meal',
+    note: document.getElementById('menu-note').value.trim(),
+    courses: menuData.courses,
+    dishes: menuData.dishes
+  };
+  localStorage.setItem('utanu_menu', JSON.stringify(data));
+  menuData = Object.assign(menuData, data);
+  if(!isDemo()) sb.from('site_config').upsert({key:'menu',value:data},{onConflict:'key'}).catch(()=>{});
+  showToast('success','Menu saved — live on booking form');
+}
 
 function renderSettings(){
   const u=document.getElementById('cfg-sb-url'),k=document.getElementById('cfg-sb-key');
@@ -828,6 +943,106 @@ function exportKaraniCSV() {
   a.download = 'karani_payout_' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
   showToast('success', 'Karani payout CSV exported');
+}
+
+
+// ── EVENTS ──
+const EVENT_TYPES = new Set(['event','birthday','corporate','catering']);
+let currentEventId = null;
+
+function renderEvents() {
+  const typeFilter = document.getElementById('filter-event-type')?.value || '';
+  const statusFilter = document.getElementById('filter-event-status')?.value || '';
+  const events = allBookings.filter(b => {
+    const isEvent = EVENT_TYPES.has(b.type);
+    const typeOk = !typeFilter || b.type === typeFilter;
+    const statusOk = !statusFilter || b.status === statusFilter;
+    return isEvent && typeOk && statusOk;
+  });
+  document.getElementById('events-count').textContent = events.length;
+  const typeLabels = {event:'Wedding/Event',birthday:'Birthday',corporate:'Corporate',catering:'Catering'};
+  document.getElementById('events-tbody').innerHTML = events.length
+    ? events.map(b => {
+        const hasCars = b.cars_requested && b.cars_selected && b.cars_selected.length > 0;
+        const carsList = hasCars ? b.cars_selected.join(', ') : '—';
+        const mealCost = b.meal_cost || (b.food_included ? (b.people * 800) : 0);
+        const rm = {confirmed:'badge-confirmed',pending:'badge-pending',cancelled:'badge-cancelled',completed:'badge-completed'};
+        return `<tr onclick="openEventEditor('${b.id}')">
+          <td><div class="td-name">${escH(b.name)}</div><div class="td-phone">${escH(b.phone)}</div></td>
+          <td><span class="badge badge-${b.type}">${typeLabels[b.type]||b.type}</span></td>
+          <td class="td-mono">${b.booking_date||'—'}</td>
+          <td class="td-mono">${b.people}</td>
+          <td style="font-size:.78rem">${b.food_included ? '<span style="color:var(--fern)">&#10003; KES '+(mealCost).toLocaleString()+'</span>' : '<span style="color:var(--muted)">—</span>'}</td>
+          <td style="font-size:.78rem">${hasCars ? '<span style="color:var(--wheat)">&#127950; '+(b.cars_selected.length)+' car'+(b.cars_selected.length>1?'s':'')+'</span>' : '<span style="color:var(--muted)">—</span>'}</td>
+          <td class="td-mono" style="color:var(--wheat)">KES ${Number(b.total_amount||0).toLocaleString()}</td>
+          <td><span class="badge ${rm[b.status]||'badge-pending'}">${b.status}</span></td>
+          <td onclick="event.stopPropagation()">
+            ${b.status==='pending'?`<button class="row-action" onclick="updateStatus('${b.id}','confirmed')">Confirm</button>`:''}
+            <button class="row-action" onclick="openEventEditor('${b.id}')">Details</button>
+          </td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">&#127942;</div><div class="empty-text">No event bookings yet</div></div></td></tr>';
+}
+
+function openEventEditor(id) {
+  const b = allBookings.find(b => b.id === id);
+  if (!b) return;
+  currentEventId = id;
+  document.getElementById('event-editor-title').textContent = 'Event — ' + escH(b.name);
+  document.getElementById('ev-name').value = b.name || '';
+  document.getElementById('ev-phone').value = b.phone || '';
+  document.getElementById('ev-type').value = ({event:'Wedding / Event',birthday:'Birthday',corporate:'Corporate',catering:'Outside Catering'}[b.type]||b.type);
+  document.getElementById('ev-date').value = b.booking_date || '';
+  document.getElementById('ev-people').value = b.people || '';
+  document.getElementById('ev-slot').value = b.time_slot || 'Not specified';
+  document.getElementById('ev-food').value = b.food_included ? 'Yes' : 'No';
+  const mealCost = b.meal_cost || (b.food_included ? (b.people * 800) : 0);
+  document.getElementById('ev-meal-cost').value = b.food_included ? 'KES ' + mealCost.toLocaleString() : '—';
+  document.getElementById('ev-dishes').textContent = (b.dishes_selected && b.dishes_selected.length)
+    ? b.dishes_selected.join(' · ') : (b.food_included ? 'Full farm menu' : 'No meal');
+  const hasCars = b.cars_requested && b.cars_selected && b.cars_selected.length > 0;
+  document.getElementById('ev-cars-section').style.display = hasCars ? '' : 'none';
+  if (hasCars) {
+    document.getElementById('ev-cars').textContent = b.cars_selected.join(', ');
+    document.getElementById('ev-cars-hours').value = (b.cars_hours || 4) + ' hours';
+    document.getElementById('ev-cars-pickup').value = b.cars_pickup || 'TBC';
+  }
+  document.getElementById('ev-notes').value = b.special_requests || '';
+  document.getElementById('ev-status-select').value = b.status || 'pending';
+  document.getElementById('ev-staff-notes').value = b.staff_note || '';
+  document.getElementById('ev-total').value = 'KES ' + Number(b.total_amount||0).toLocaleString();
+  // WhatsApp link
+  const waBtn = document.getElementById('ev-whatsapp-btn');
+  if (waBtn) {
+    const phone = (b.phone||'').replace(/^0/,'254').replace(/\s/g,'');
+    const msg = encodeURIComponent('Hello ' + b.name.split(' ')[0] + ', this is Utanu Farm regarding your ' + b.type + ' booking on ' + b.booking_date + '. Please let us know if you have any questions.');
+    waBtn.href = 'https://wa.me/' + phone + '?text=' + msg;
+  }
+  document.getElementById('event-editor').style.display = '';
+  document.getElementById('event-editor').scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeEventEditor() {
+  document.getElementById('event-editor').style.display = 'none';
+  currentEventId = null;
+}
+
+async function saveEventDetails() {
+  if (!currentEventId) return;
+  const b = allBookings.find(b => b.id === currentEventId);
+  if (!b) return;
+  const newStatus = document.getElementById('ev-status-select').value;
+  const staffNote = document.getElementById('ev-staff-notes').value.trim();
+  b.status = newStatus;
+  b.staff_note = staffNote;
+  if (!isDemo()) {
+    await sbPatch('bookings', currentEventId, { status: newStatus, staff_note: staffNote });
+  }
+  updateBadges();
+  renderEvents();
+  renderBookings();
+  showToast('success', 'Event updated');
 }
 
 var toastTimer;
