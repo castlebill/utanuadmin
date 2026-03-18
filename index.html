@@ -665,8 +665,61 @@ function removeDish(i){menuData.dishes.splice(i,1);renderDishesList();}
 function saveMenuSettings(){menuData.price=parseInt(document.getElementById('menu-price').value)||800;menuData.label=document.getElementById('menu-label').value.trim();menuData.note=document.getElementById('menu-note').value.trim();showToast('success','Meal pricing saved');}
 function saveMenu(){showToast('success','Menu saved — live on booking form');}
 
-function renderSettings(){const u=document.getElementById('cfg-sb-url'),k=document.getElementById('cfg-sb-key');if(!isDemo()){u.value=SUPABASE_URL;k.value='••••••••';}document.getElementById('sb-status-badge').textContent=isDemo()?'Demo mode':'Connected';document.getElementById('sb-status-badge').className='badge '+(isDemo()?'badge-pending':'badge-confirmed');}
-function saveCfg(s){showToast('success',s.charAt(0).toUpperCase()+s.slice(1)+' settings saved');}
+function renderSettings(){
+  const u=document.getElementById('cfg-sb-url'),k=document.getElementById('cfg-sb-key');
+  if(!isDemo()){u.value=SUPABASE_URL;k.value='••••••••';}
+  document.getElementById('sb-status-badge').textContent=isDemo()?'Demo mode':'Connected';
+  document.getElementById('sb-status-badge').className='badge '+(isDemo()?'badge-pending':'badge-confirmed');
+  // Load saved farm info
+  const saved=localStorage.getItem('utanu_farm_info');
+  if(saved){try{const c=JSON.parse(saved);
+    if(c.name)document.getElementById('cfg-name').value=c.name;
+    if(c.tagline)document.getElementById('cfg-tagline').value=c.tagline;
+    if(c.location)document.getElementById('cfg-location').value=c.location;
+    if(c.phone)document.getElementById('cfg-phone').value=c.phone;
+    if(c.email)document.getElementById('cfg-email').value=c.email;
+    if(c.opens)document.getElementById('cfg-open').value=c.opens;
+    if(c.closes)document.getElementById('cfg-close').value=c.closes;
+  }catch(e){}}
+}
+async function saveCfg(section){
+  if(section==='farm'){
+    const cfg={
+      name:document.getElementById('cfg-name').value.trim(),
+      tagline:document.getElementById('cfg-tagline').value.trim(),
+      location:document.getElementById('cfg-location').value.trim(),
+      phone:document.getElementById('cfg-phone').value.trim(),
+      email:document.getElementById('cfg-email').value.trim(),
+      opens:document.getElementById('cfg-open').value.trim(),
+      closes:document.getElementById('cfg-close').value.trim()
+    };
+    localStorage.setItem('utanu_farm_info', JSON.stringify(cfg));
+    if(!isDemo()){
+      const {error}=await sb.from('site_config').upsert({key:'farm_info',value:cfg},{onConflict:'key'});
+      if(error){showToast('error','Save failed: '+error.message);return;}
+    }
+    showToast('success','Farm info saved — homepage will reflect changes');
+    return;
+  }
+  if(section==='booking'){
+    const rules={
+      min_notice:parseInt(document.getElementById('cfg-notice').value)||1,
+      max_advance:parseInt(document.getElementById('cfg-advance').value)||180,
+      min_group:parseInt(document.getElementById('cfg-mingroup').value)||1,
+      max_group:parseInt(document.getElementById('cfg-maxgroup').value)||100,
+      require_deposit:document.getElementById('cfg-deposit').checked,
+      allow_sameday:document.getElementById('cfg-sameday').checked,
+      auto_confirm:document.getElementById('cfg-autoconfirm').checked
+    };
+    localStorage.setItem('utanu_booking_rules',JSON.stringify(rules));
+    if(!isDemo()){
+      await sb.from('site_config').upsert({key:'booking_rules',value:rules},{onConflict:'key'});
+    }
+    showToast('success','Booking rules saved');
+    return;
+  }
+  showToast('success',section.charAt(0).toUpperCase()+section.slice(1)+' settings saved');
+}
 async function testSupabase(){const url=document.getElementById('cfg-sb-url').value.trim(),key=document.getElementById('cfg-sb-key').value.trim();if(!url||!key||key==='••••••••'){showToast('error','Enter URL and key first');return;}try{const testSb=supabase.createClient(url,key);const{error}=await testSb.from('bookings').select('id').limit(1);showToast(error?'error':'success',error?'Query failed: '+error.message:'Connection successful');}catch(e){showToast('error','Cannot reach: '+e.message);}}
 function applySupabase(){const url=document.getElementById('cfg-sb-url').value.trim(),key=document.getElementById('cfg-sb-key').value.trim();if(!url||!key||key==='••••••••'){showToast('error','Enter URL and key first');return;}localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);SUPABASE_URL=url;SUPABASE_ANON_KEY=key;sb=supabase.createClient(url,key);document.getElementById('conn-status').textContent='Connected';showToast('success','Applied');setTimeout(()=>loadAll(),500);}
 
