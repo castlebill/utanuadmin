@@ -758,15 +758,15 @@ function addCourse(){menuData.courses.push('New Course');renderCoursesList();}
 function removeCourse(i){if(menuData.courses.length<=1){showToast('error','Need at least one course');return;}menuData.courses.splice(i,1);renderCoursesList();renderDishesList();}
 function addDish(){menuData.dishes.push({course:menuData.courses[0]||'',name:'',desc:''});renderDishesList();}
 function removeDish(i){menuData.dishes.splice(i,1);renderDishesList();}
-function saveMenuSettings(){
+async function saveMenuSettings(){
   menuData.price=parseInt(document.getElementById('menu-price').value)||800;
   menuData.label=document.getElementById('menu-label').value.trim()||'Farm-to-table meal';
   menuData.note=document.getElementById('menu-note').value.trim();
   localStorage.setItem('utanu_menu', JSON.stringify(menuData));
-  if(!isDemo()) sb.from('site_config').upsert({key:'menu',value:menuData},{onConflict:'key'}).catch(()=>{});
+  if(!isDemo()){ try { await sb.from('site_config').upsert({key:'menu',value:menuData},{onConflict:'key'}); } catch(e){} }
   showToast('success','Meal pricing saved — live on booking form');
 }
-function saveMenu(){
+async function saveMenu(){
   // Save to localStorage so homepage reads it live
   const data = {
     price: parseInt(document.getElementById('menu-price').value)||800,
@@ -777,7 +777,7 @@ function saveMenu(){
   };
   localStorage.setItem('utanu_menu', JSON.stringify(data));
   menuData = Object.assign(menuData, data);
-  if(!isDemo()) sb.from('site_config').upsert({key:'menu',value:data},{onConflict:'key'}).catch(()=>{});
+  if(!isDemo()){ try { await sb.from('site_config').upsert({key:'menu',value:data},{onConflict:'key'}); } catch(e){} }
   showToast('success','Menu saved — live on booking form');
 }
 
@@ -811,8 +811,8 @@ async function saveCfg(section){
     };
     localStorage.setItem('utanu_farm_info', JSON.stringify(cfg));
     if(!isDemo()){
-      const {error}=await sb.from('site_config').upsert({key:'farm_info',value:cfg},{onConflict:'key'}).catch(()=>({error:null}));
-      if(error){showToast('info','Saved locally — connect Supabase for cloud sync');return;}
+      try { await sb.from('site_config').upsert({key:'farm_info',value:cfg},{onConflict:'key'}); }
+      catch(e) { /* saved to localStorage, Supabase sync failed silently */ }
     }
     showToast('success','Farm info saved — homepage will reflect changes');
     return;
@@ -828,7 +828,7 @@ async function saveCfg(section){
       auto_confirm:document.getElementById('cfg-autoconfirm').checked
     };
     localStorage.setItem('utanu_booking_rules',JSON.stringify(rules));
-    if(!isDemo()) await sb.from('site_config').upsert({key:'booking_rules',value:rules},{onConflict:'key'}).catch(()=>{});
+    if(!isDemo()){ try { await sb.from('site_config').upsert({key:'booking_rules',value:rules},{onConflict:'key'}); } catch(e){} }
     showToast('success','Booking rules saved');
     return;
   }
